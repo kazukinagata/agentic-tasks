@@ -1,0 +1,11 @@
+{
+  "name": "headless-tasks",
+  "version": "0.1.0",
+  "description": "AI-native task management powered by Notion. Natural language CRUD, real-time HTML views (kanban, list), and autonomous task execution.",
+  "author": {
+    "name": "kazukinagata"
+  },
+  "license": "MIT",
+  "mcpServers": "./.mcp.json",
+  "hooks": "./hooks/hooks.json"
+}
