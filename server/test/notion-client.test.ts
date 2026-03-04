@@ -4,11 +4,13 @@ import { NotionTaskClient } from "../src/notion-client.js";
 // Mock @notionhq/client
 vi.mock("@notionhq/client", () => {
   return {
-    Client: vi.fn().mockImplementation(() => ({
-      databases: {
-        query: vi.fn(),
-      },
-    })),
+    Client: vi.fn(function () {
+      return {
+        databases: {
+          query: vi.fn(),
+        },
+      };
+    }),
   };
 });
 

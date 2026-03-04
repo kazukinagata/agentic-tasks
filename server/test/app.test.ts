@@ -3,19 +3,21 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mock notion-client before importing app
 vi.mock("../src/notion-client.js", () => {
   return {
-    NotionTaskClient: vi.fn().mockImplementation(() => ({
-      fetchTasks: vi.fn().mockResolvedValue({
-        tasks: [
-          {
-            id: "task-1",
-            title: "Test task",
-            status: "Ready",
-            priority: "High",
-          },
-        ],
-        updatedAt: "2026-03-04T00:00:00Z",
-      }),
-    })),
+    NotionTaskClient: vi.fn(function () {
+      return {
+        fetchTasks: vi.fn().mockResolvedValue({
+          tasks: [
+            {
+              id: "task-1",
+              title: "Test task",
+              status: "Ready",
+              priority: "High",
+            },
+          ],
+          updatedAt: "2026-03-04T00:00:00Z",
+        }),
+      };
+    }),
   };
 });
 
@@ -44,5 +46,13 @@ describe("API", () => {
     expect(body.tasks).toHaveLength(1);
     expect(body.tasks[0].title).toBe("Test task");
     expect(body.updatedAt).toBeDefined();
+  });
+
+  it("POST /api/refresh triggers data fetch and returns ok", async () => {
+    const res = await app.request("/api/refresh", { method: "POST" });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe("ok");
+    expect(body.taskCount).toBe(1);
   });
 });
