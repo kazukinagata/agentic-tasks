@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { NotionTaskClient } from "./notion-client.js";
 import { EventBus } from "./sse.js";
 
@@ -92,5 +93,9 @@ app.post("/api/refresh", async (c) => {
     return c.json({ status: "error", message: e.message }, 500);
   }
 });
+
+// Static files — AFTER API routes
+app.get("/", (c) => c.redirect("/selector.html"));
+app.use("*", serveStatic({ root: "./static" }));
 
 export default app;

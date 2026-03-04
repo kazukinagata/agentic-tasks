@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Headless Tasks — Views</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1117; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+    h1 { font-size: 28px; font-weight: 700; color: #a78bfa; margin-bottom: 8px; }
+    p { color: #718096; font-size: 15px; margin-bottom: 40px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; width: 100%; max-width: 700px; }
+    .card { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 12px; padding: 28px 24px; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s; cursor: pointer; position: relative; overflow: hidden; }
+    .card:hover { border-color: #7c3aed; transform: translateY(-3px); box-shadow: 0 8px 24px rgba(124,58,237,0.2); }
+    .card.coming-soon { opacity: 0.5; cursor: default; }
+    .card.coming-soon:hover { transform: none; box-shadow: none; border-color: #2d3748; }
+    .icon { font-size: 36px; margin-bottom: 14px; display: block; }
+    .card-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .card-desc { font-size: 13px; color: #718096; line-height: 1.5; }
+    .soon-badge { position: absolute; top: 12px; right: 12px; background: #2d3748; color: #718096; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+    footer { margin-top: 48px; color: #4a5568; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Headless Tasks</h1>
+  <p>Choose a view to explore your tasks</p>
+  <div class="grid">
+    <a href="/list.html" class="card">
+      <span class="icon">☰</span>
+      <div class="card-title">List View</div>
+      <div class="card-desc">Sortable table with filters. Best for scanning all tasks at once.</div>
+    </a>
+    <a href="/kanban.html" class="card">
+      <span class="icon">⬜</span>
+      <div class="card-title">Kanban Board</div>
+      <div class="card-desc">Columns by status. Visualize flow from Backlog to Done.</div>
+    </a>
+    <div class="card coming-soon">
+      <span class="soon-badge">Soon</span>
+      <span class="icon">📅</span>
+      <div class="card-title">Calendar</div>
+      <div class="card-desc">Tasks on a timeline by due date.</div>
+    </div>
+    <div class="card coming-soon">
+      <span class="soon-badge">Soon</span>
+      <span class="icon">📊</span>
+      <div class="card-title">Gantt Chart</div>
+      <div class="card-desc">Dependencies and estimates as a Gantt timeline.</div>
+    </div>
+  </div>
+  <footer>Headless Tasks • Real-time updates via SSE</footer>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasks — Kanban</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1117; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; display: flex; flex-direction: column; }
+    header { background: #1a1f2e; border-bottom: 1px solid #2d3748; padding: 14px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex-shrink: 0; }
+    header h1 { font-size: 18px; font-weight: 600; color: #a78bfa; flex: 1; }
+    .filter-bar { display: flex; gap: 10px; align-items: center; }
+    select, input { background: #2d3748; border: 1px solid #4a5568; color: #e2e8f0; padding: 5px 10px; border-radius: 6px; font-size: 13px; outline: none; }
+    select:focus, input:focus { border-color: #7c3aed; }
+    .status-bar { padding: 6px 20px; font-size: 12px; color: #718096; background: #141720; border-bottom: 1px solid #2d3748; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .sse-dot { width: 8px; height: 8px; border-radius: 50%; background: #48bb78; display: inline-block; }
+    .sse-dot.disconnected { background: #fc8181; }
+    .board { display: flex; gap: 12px; padding: 16px 20px; overflow-x: auto; flex: 1; align-items: flex-start; }
+    .column { background: #141720; border: 1px solid #2d3748; border-radius: 10px; width: 260px; min-width: 260px; display: flex; flex-direction: column; max-height: calc(100vh - 130px); }
+    .col-header { padding: 12px 14px; font-size: 13px; font-weight: 600; border-bottom: 1px solid #2d3748; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #141720; border-radius: 10px 10px 0 0; flex-shrink: 0; }
+    .col-count { background: #2d3748; color: #a0aec0; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+    .col-backlog  .col-header { color: #a0aec0; }
+    .col-ready    .col-header { color: #63b3ed; }
+    .col-progress .col-header { color: #f6ad55; }
+    .col-review   .col-header { color: #b794f4; }
+    .col-done     .col-header { color: #68d391; }
+    .col-backlog  { border-top: 3px solid #4a5568; }
+    .col-ready    { border-top: 3px solid #3182ce; }
+    .col-progress { border-top: 3px solid #dd6b20; }
+    .col-review   { border-top: 3px solid #6b46c1; }
+    .col-done     { border-top: 3px solid #276749; }
+    .cards { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; }
+    .card { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.15s, transform 0.1s; position: relative; overflow: hidden; }
+    .card:hover { border-color: #4a5568; transform: translateY(-1px); }
+    .card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+    .card.p-urgent::before { background: #fc8181; }
+    .card.p-high::before   { background: #f6ad55; }
+    .card.p-medium::before { background: #63b3ed; }
+    .card.p-low::before    { background: #4a5568; }
+    .card-title { font-size: 13px; font-weight: 500; line-height: 1.4; color: #e2e8f0; padding-left: 6px; word-break: break-word; }
+    .card-meta { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center; padding-left: 6px; }
+    .badge { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .p-urgent { color: #fc8181; background: #3d1515; }
+    .p-high   { color: #f6ad55; background: #3d2415; }
+    .p-medium { color: #63b3ed; background: #1a2d4a; }
+    .p-low    { color: #a0aec0; background: #2d3748; }
+    .avatars { display: flex; gap: 2px; }
+    .avatar { width: 20px; height: 20px; border-radius: 50%; background: #4a5568; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #e2e8f0; }
+    .due { font-size: 11px; color: #718096; }
+    .due.overdue { color: #fc8181; font-weight: 600; }
+    .tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; padding-left: 6px; }
+    .tag { background: #2d3748; color: #718096; padding: 1px 6px; border-radius: 8px; font-size: 10px; }
+    .empty-col { color: #4a5568; font-size: 12px; text-align: center; padding: 20px 10px; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #2d3748; color: #e2e8f0; padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; border: 1px solid #4a5568; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Tasks — Kanban</h1>
+  <div class="filter-bar">
+    <input type="text" id="search" placeholder="Search..." style="width:160px">
+    <select id="filter-priority">
+      <option value="">All Priority</option>
+      <option>Urgent</option><option>High</option><option>Medium</option><option>Low</option>
+    </select>
+    <a href="/selector.html" style="color:#a78bfa;text-decoration:none;font-size:13px">← Views</a>
+  </div>
+</header>
+<div class="status-bar">
+  <span class="sse-dot disconnected" id="sse-dot"></span>
+  <span id="sse-status">Connecting...</span>
+  <span id="task-count"></span>
+</div>
+<div class="board" id="board">
+  <div class="column col-backlog"><div class="col-header">Backlog <span class="col-count" id="cnt-backlog">0</span></div><div class="cards" id="col-backlog"></div></div>
+  <div class="column col-ready"><div class="col-header">Ready <span class="col-count" id="cnt-ready">0</span></div><div class="cards" id="col-ready"></div></div>
+  <div class="column col-progress"><div class="col-header">In Progress <span class="col-count" id="cnt-progress">0</span></div><div class="cards" id="col-progress"></div></div>
+  <div class="column col-review"><div class="col-header">In Review <span class="col-count" id="cnt-review">0</span></div><div class="cards" id="col-review"></div></div>
+  <div class="column col-done"><div class="col-header">Done <span class="col-count" id="cnt-done">0</span></div><div class="cards" id="col-done"></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  let allTasks = [];
+  const today = new Date().toISOString().split('T')[0];
+  const colMap = { 'Backlog':'backlog', 'Ready':'ready', 'In Progress':'progress', 'In Review':'review', 'Done':'done' };
+  const prioClass = { Urgent:'p-urgent', High:'p-high', Medium:'p-medium', Low:'p-low' };
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function initials(name) {
+    return name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  }
+
+  function render() {
+    const search = document.getElementById('search').value.toLowerCase();
+    const priority = document.getElementById('filter-priority').value;
+    const filtered = allTasks.filter(t =>
+      (!search || t.title.toLowerCase().includes(search)) &&
+      (!priority || t.priority === priority)
+    );
+
+    const grouped = { backlog:[], ready:[], progress:[], review:[], done:[] };
+    filtered.forEach(t => {
+      const col = colMap[t.status] || 'backlog';
+      grouped[col].push(t);
+    });
+
+    Object.entries(grouped).forEach(([col, tasks]) => {
+      const el = document.getElementById('col-'+col);
+      const cnt = document.getElementById('cnt-'+col);
+      cnt.textContent = tasks.length;
+      if (tasks.length === 0) {
+        el.innerHTML = '<div class="empty-col">No tasks</div>';
+        return;
+      }
+      el.innerHTML = tasks.map(t => {
+        const pc = t.priority ? prioClass[t.priority] : '';
+        const overdue = t.dueDate && t.dueDate < today;
+        return `<div class="card ${pc}" onclick="copyId('${t.id}')" title="Click to copy ID">
+          <div class="card-title">${esc(t.title)}</div>
+          <div class="card-meta">
+            ${t.priority ? `<span class="badge ${pc}">${esc(t.priority)}</span>` : ''}
+            <div class="avatars">${(t.assignees||[]).map(a=>`<div class="avatar" title="${esc(a.name)}">${initials(a.name)}</div>`).join('')}</div>
+            ${t.dueDate ? `<span class="due${overdue?' overdue':''}">${t.dueDate}${overdue?' ⚠':''}</span>` : ''}
+          </div>
+          ${t.tags&&t.tags.length ? `<div class="tags">${t.tags.map(g=>`<span class="tag">${esc(g)}</span>`).join('')}</div>` : ''}
+        </div>`;
+      }).join('');
+    });
+
+    document.getElementById('task-count').textContent = `${filtered.length} tasks`;
+  }
+
+  function copyId(id) {
+    navigator.clipboard.writeText(id).catch(()=>{});
+    showToast('ID copied: ' + id.slice(0,8) + '...');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  async function fetchTasks() {
+    try {
+      const res = await fetch('/api/tasks');
+      if (!res.ok) throw new Error(res.statusText);
+      const data = await res.json();
+      allTasks = data.tasks || [];
+      render();
+    } catch(e) {
+      document.getElementById('sse-status').textContent = 'Error: ' + e.message;
+    }
+  }
+
+  ['search','filter-priority'].forEach(id =>
+    document.getElementById(id).addEventListener('input', render)
+  );
+
+  // SSE
+  function connectSSE() {
+    const dot = document.getElementById('sse-dot');
+    const status = document.getElementById('sse-status');
+    const es = new EventSource('/api/events');
+    es.addEventListener('connected', () => {
+      dot.classList.remove('disconnected');
+      status.textContent = 'Live';
+    });
+    es.addEventListener('refresh', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        allTasks = data.tasks || [];
+        render();
+      } catch(err) { fetchTasks(); }
+    });
+    es.onerror = () => {
+      dot.classList.add('disconnected');
+      status.textContent = 'Reconnecting...';
+      es.close();
+      setTimeout(connectSSE, 3000);
+    };
+  }
+
+  fetchTasks();
+  connectSSE();
+</script>
+</body>
+</html>
