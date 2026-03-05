@@ -6,6 +6,14 @@
     "name": "kazukinagata"
   },
   "license": "MIT",
-  "mcpServers": "./.mcp.json",
+  "mcpServers": {
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "env": {
+        "NOTION_TOKEN": "${NOTION_TOKEN}"
+      }
+    }
+  },
   "hooks": "./hooks/hooks.json"
 }

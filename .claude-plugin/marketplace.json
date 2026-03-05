@@ -1,0 +1,26 @@
+{
+  "name": "headless-tasks-marketplace",
+  "owner": {
+    "name": "kazukinagata"
+  },
+  "metadata": {
+    "description": "AI-native task management plugin powered by Notion"
+  },
+  "plugins": [
+    {
+      "name": "headless-tasks",
+      "source": {
+        "source": "github",
+        "repo": "kazukinagata/headless-tasks"
+      },
+      "description": "AI-native task management powered by Notion. Natural language CRUD, real-time HTML views (kanban, list), and autonomous task execution.",
+      "version": "0.1.0",
+      "author": {
+        "name": "kazukinagata"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "tags": ["notion", "tasks", "kanban", "agent"]
+    }
+  ]
+}
