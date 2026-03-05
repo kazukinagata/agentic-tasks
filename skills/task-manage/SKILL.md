@@ -14,14 +14,20 @@ You are managing tasks stored in a Notion database. Use the Notion MCP tools for
 
 ## Database Configuration
 
-Read environment variables for database IDs:
-- Tasks DB: `NOTION_DATABASE_ID`
-- Teams DB: `NOTION_TEAMS_DB_ID`
-- Projects DB: `NOTION_PROJECTS_DB_ID`
+At the start of each session, read the config page to get database IDs:
+
+1. Use `search` with query "Headless Tasks Config" to find the config page
+2. Retrieve the page body using `retrieve-a-page` (or `retrieve-block-children` for the content)
+3. Parse the JSON code block to extract:
+   - `tasksDatabaseId`
+   - `teamsDatabaseId`
+   - `projectsDatabaseId`
+
+Use these IDs for all subsequent Notion operations.
 
 ## Notion MCP Tool Reference
 
-- `create-a-page` — Create a task (parent: `{ "database_id": TASKS_DB_ID }`)
+- `create-a-page` — Create a task (parent: `{ "database_id": tasksDatabaseId }`)
 - `update-page-properties` — Update task properties
 - `query-data-source` — Query tasks with filters/sorts
 - `search` — Full-text search across tasks
@@ -89,3 +95,23 @@ For requests like "show me all blocked tasks" or "mark all Done tasks as archive
 1. Use `query-data-source` with appropriate filters
 2. Present results to user for confirmation
 3. Execute updates in sequence using `update-page-properties`
+
+## After Any Task Operation
+
+After creating, updating, or deleting tasks, push fresh data to the view server:
+
+1. Query all tasks via `query-data-source` on `tasksDatabaseId`
+2. Format the response as a `TasksResponse` JSON object:
+   ```json
+   { "tasks": [...], "updatedAt": "<ISO timestamp>" }
+   ```
+3. POST to `http://localhost:3456/api/data` with `Content-Type: application/json`
+
+Use the Bash tool:
+```bash
+curl -s -X POST http://localhost:3456/api/data \
+  -H "Content-Type: application/json" \
+  -d '<json>' -o /dev/null 2>/dev/null || true
+```
+
+Silently skip if the server is not running (the `|| true` handles this).

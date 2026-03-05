@@ -8,11 +8,8 @@
   "license": "MIT",
   "mcpServers": {
     "notion": {
-      "command": "npx",
-      "args": ["-y", "@notionhq/notion-mcp-server"],
-      "env": {
-        "NOTION_TOKEN": "${NOTION_TOKEN}"
-      }
+      "type": "http",
+      "url": "https://mcp.notion.com/mcp"
     }
   },
   "hooks": "./hooks/hooks.json"

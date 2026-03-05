@@ -9,50 +9,30 @@ description: >
 # Headless Tasks — Setup Guide
 
 You are guiding the user through the initial setup of the Headless Tasks plugin.
-Follow these steps in order. Ask the user to confirm each step before proceeding.
+All database operations are performed via Notion MCP tools (OAuth — no token needed).
 
-## Prerequisites
+## Step 1: Verify Notion MCP Connection
 
-The user needs:
-- A Notion account
-- Admin access to a Notion workspace
+Call `search` with query "test" to confirm the Notion MCP OAuth connection is working.
 
-## Step 1: Create Notion Integration
+If it fails, tell the user to run `/mcp` in Claude Code to authenticate with Notion, then retry.
 
-Guide the user to create a Notion integration:
+## Step 2: Choose Parent Page Location
 
-1. Go to https://www.notion.so/profile/integrations
-2. Click "New Integration"
-3. Name it "Headless Tasks"
-4. Select the workspace
-5. Copy the "Internal Integration Secret" (starts with `ntn_`)
+Use `AskUserQuestion` to ask:
+> "Where should I create the Headless Tasks workspace in Notion? Please provide a parent page name or URL. (Leave blank to create at the root of your workspace.)"
 
-## Step 2: Set Environment Variable
+## Step 3: Create Parent Page
 
-**Claude Code:**
+Create a parent page using `create-a-page`:
+- Title: "Headless Tasks" (or as specified by user)
+- Parent: the page the user specified, or workspace root if blank
 
-Ask the user to add the token to their project's `.claude/settings.local.json`:
+Note the returned page ID as `PARENT_PAGE_ID`.
 
-```json
-{
-  "env": {
-    "NOTION_TOKEN": "ntn_PASTE_TOKEN_HERE"
-  }
-}
-```
+## Step 4: Create Databases
 
-**Cowork:**
-
-Guide the user to set `NOTION_TOKEN` via the Cowork admin settings UI.
-
-## Step 3: Create Notion Databases
-
-Use the Notion MCP tools to create three databases. First verify the MCP connection works:
-
-1. Call `search` with query "test" to verify the connection
-2. Create a parent page for the databases using `create-a-page`
-
-Then create each database using `create-a-data-source`:
+Create each database using `create-a-database` with `PARENT_PAGE_ID` as the parent.
 
 ### Tasks Database
 
@@ -79,42 +59,46 @@ Properties:
 | Artifacts | url | — |
 | Context | rich_text | — |
 
+Note the returned database ID as `TASKS_DB_ID`.
+
 ### Teams Database
 
 Properties: Name (title), Members (people), Tasks (relation → Tasks DB)
+
+Note the returned database ID as `TEAMS_DB_ID`.
 
 ### Projects Database
 
 Properties: Name (title), Owner (people), Team (relation → Teams DB), Status (select: Active/On Hold/Completed/Archived), Tasks (relation → Tasks DB), Due Date (date)
 
-## Step 4: Store Database IDs
+Note the returned database ID as `PROJECTS_DB_ID`.
 
-After creating the databases, store their IDs in `.claude/settings.local.json`:
+## Step 5: Create Config Page
+
+Create a page using `create-a-page` under `PARENT_PAGE_ID`:
+- Title: "Headless Tasks Config"
+- Body: a code block (language: `json`) containing:
 
 ```json
 {
-  "env": {
-    "NOTION_TOKEN": "ntn_...",
-    "NOTION_DATABASE_ID": "TASKS_DB_ID_HERE",
-    "NOTION_TEAMS_DB_ID": "TEAMS_DB_ID_HERE",
-    "NOTION_PROJECTS_DB_ID": "PROJECTS_DB_ID_HERE"
-  }
+  "tasksDatabaseId": "<TASKS_DB_ID>",
+  "teamsDatabaseId": "<TEAMS_DB_ID>",
+  "projectsDatabaseId": "<PROJECTS_DB_ID>"
 }
 ```
 
-## Step 5: Share Databases with Integration
-
-Remind the user to share each database with the "Headless Tasks" integration:
-1. Open each database in Notion
-2. Click "..." menu → "Connections" → Add "Headless Tasks"
+Replace the placeholders with the actual IDs from Step 4.
 
 ## Step 6: Verify
 
-Create a test task using `create-a-page` with the Tasks database as parent:
+Use `AskUserQuestion` to confirm:
+> "Setup complete! I've created the Headless Tasks workspace in Notion with Tasks, Teams, and Projects databases, and a Config page storing the database IDs. Would you like me to create a test task to verify everything is working?"
+
+If yes, create a test task using `create-a-page` with the Tasks database as parent:
 - Title: "Test task — delete me"
 - Status: Ready
 - Priority: Medium
 
-If successful, tell the user setup is complete and they can start using:
-- Natural language task management (task-manage skill)
-- Visual views (task-view skill)
+Tell the user setup is complete and they can start using:
+- Natural language task management (`task-manage` skill)
+- Visual views (`task-view` skill)
