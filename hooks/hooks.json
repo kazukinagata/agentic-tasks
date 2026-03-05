@@ -1,19 +1,4 @@
 {
-  "description": "Headless Tasks hooks — notify view server when Notion data changes",
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "mcp__notion__.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify-view.sh",
-            "timeout": 5,
-            "async": true,
-            "statusMessage": "Refreshing task views..."
-          }
-        ]
-      }
-    ]
-  }
+  "description": "Headless Tasks hooks",
+  "hooks": {}
 }

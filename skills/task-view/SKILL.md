@@ -27,10 +27,6 @@ curl -s http://localhost:3456/api/health 2>/dev/null
 
 If the health check succeeds, the server is already running. Do NOT start a second instance.
 
-Required environment variables (should already be set via settings.local.json):
-- `NOTION_TOKEN`
-- `NOTION_DATABASE_ID`
-
 ## Available Views
 
 | View | URL | Status |
@@ -58,6 +54,21 @@ wslview http://localhost:3456/kanban.html
 
 Detect the platform and use the appropriate command.
 
+## Initializing Data After Start
+
+After starting the server, push current task data so the view is populated:
+
+1. Use `search` with query "Headless Tasks Config" to find the config page
+2. Retrieve the page body and parse the JSON to get `tasksDatabaseId`
+3. Query all tasks via `query-data-source` on `tasksDatabaseId`
+4. POST to `http://localhost:3456/api/data`:
+
+```bash
+curl -s -X POST http://localhost:3456/api/data \
+  -H "Content-Type: application/json" \
+  -d '<json>' -o /dev/null 2>/dev/null || true
+```
+
 ## View Features
 
 All views support:
@@ -70,5 +81,5 @@ All views support:
 
 If views don't update after task changes:
 1. Check the server is running: `curl http://localhost:3456/api/health`
-2. Manually trigger refresh: `curl -X POST http://localhost:3456/api/refresh`
+2. Manually push data: use the task-manage skill to query tasks and POST to `/api/data`
 3. Check server logs in the terminal where it's running

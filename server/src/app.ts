@@ -2,24 +2,12 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { serveStatic } from "@hono/node-server/serve-static";
-import { NotionTaskClient } from "./notion-client.js";
 import { EventBus } from "./sse.js";
+import type { TasksResponse } from "./types.js";
 
-let notionClient: NotionTaskClient | null = null;
 const eventBus = new EventBus();
 let sseId = 0;
-
-function getNotionClient(): NotionTaskClient {
-  if (!notionClient) {
-    const token = process.env.NOTION_TOKEN;
-    const dbId = process.env.NOTION_DATABASE_ID;
-    if (!token || !dbId) {
-      throw new Error("NOTION_TOKEN and NOTION_DATABASE_ID must be set");
-    }
-    notionClient = new NotionTaskClient({ token, tasksDatabaseId: dbId });
-  }
-  return notionClient;
-}
+let cachedData: TasksResponse | null = null;
 
 const app = new Hono();
 
@@ -29,10 +17,18 @@ app.get("/api/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-app.get("/api/tasks", async (c) => {
-  const client = getNotionClient();
-  const data = await client.fetchTasks();
-  return c.json(data);
+app.get("/api/tasks", (c) => {
+  if (!cachedData) {
+    return c.json({ tasks: [], updatedAt: new Date().toISOString() });
+  }
+  return c.json(cachedData);
+});
+
+app.post("/api/data", async (c) => {
+  const data = await c.req.json<TasksResponse>();
+  cachedData = data;
+  eventBus.emit(JSON.stringify(data));
+  return c.json({ status: "ok" });
 });
 
 app.get("/api/events", async (c) => {
@@ -81,17 +77,6 @@ app.get("/api/events", async (c) => {
 
     unsubscribe();
   });
-});
-
-app.post("/api/refresh", async (c) => {
-  try {
-    const client = getNotionClient();
-    const data = await client.fetchTasks();
-    eventBus.emit(JSON.stringify(data));
-    return c.json({ status: "ok", taskCount: data.tasks.length });
-  } catch (e: any) {
-    return c.json({ status: "error", message: e.message }, 500);
-  }
 });
 
 // Static files — AFTER API routes

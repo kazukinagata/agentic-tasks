@@ -1,33 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-
-// Mock notion-client before importing app
-vi.mock("../src/notion-client.js", () => {
-  return {
-    NotionTaskClient: vi.fn(function () {
-      return {
-        fetchTasks: vi.fn().mockResolvedValue({
-          tasks: [
-            {
-              id: "task-1",
-              title: "Test task",
-              status: "Ready",
-              priority: "High",
-            },
-          ],
-          updatedAt: "2026-03-04T00:00:00Z",
-        }),
-      };
-    }),
-  };
-});
+import { describe, it, expect, beforeEach } from "vitest";
 
 describe("API", () => {
   let app: any;
 
   beforeEach(async () => {
-    process.env.NOTION_TOKEN = "ntn_test";
-    process.env.NOTION_DATABASE_ID = "test-db-id";
-    vi.resetModules();
     const mod = await import("../src/app.js");
     app = mod.default;
   });
@@ -39,20 +15,34 @@ describe("API", () => {
     expect(body.status).toBe("ok");
   });
 
-  it("GET /api/tasks returns task list", async () => {
+  it("GET /api/tasks returns empty when no data pushed", async () => {
     const res = await app.request("/api/tasks");
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.tasks).toHaveLength(1);
-    expect(body.tasks[0].title).toBe("Test task");
+    expect(body.tasks).toEqual([]);
     expect(body.updatedAt).toBeDefined();
   });
 
-  it("POST /api/refresh triggers data fetch and returns ok", async () => {
-    const res = await app.request("/api/refresh", { method: "POST" });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.status).toBe("ok");
-    expect(body.taskCount).toBe(1);
+  it("POST /api/data stores data and GET /api/tasks returns it", async () => {
+    const payload = {
+      tasks: [{ id: "task-1", title: "Test task", status: "Ready", priority: "High" }],
+      updatedAt: "2026-03-05T00:00:00Z",
+    };
+
+    const postRes = await app.request("/api/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    expect(postRes.status).toBe(200);
+    const postBody = await postRes.json();
+    expect(postBody.status).toBe("ok");
+
+    const getRes = await app.request("/api/tasks");
+    expect(getRes.status).toBe(200);
+    const getBody = await getRes.json();
+    expect(getBody.tasks).toHaveLength(1);
+    expect(getBody.tasks[0].title).toBe("Test task");
+    expect(getBody.updatedAt).toBe("2026-03-05T00:00:00Z");
   });
 });

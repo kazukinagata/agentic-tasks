@@ -12,6 +12,17 @@ user-invocable: true
 
 You orchestrate the autonomous execution of tasks by AI agents.
 
+## Database Configuration
+
+At the start of each session, read the config page to get database IDs:
+
+1. Use `search` with query "Headless Tasks Config" to find the config page
+2. Retrieve the page body using `retrieve-a-page` (or `retrieve-block-children` for the content)
+3. Parse the JSON code block to extract:
+   - `tasksDatabaseId`
+   - `teamsDatabaseId`
+   - `projectsDatabaseId`
+
 ## Execution Flow
 
 1. **Fetch actionable tasks**: Query Notion for tasks where:
