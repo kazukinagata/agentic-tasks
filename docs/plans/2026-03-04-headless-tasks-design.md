@@ -74,34 +74,44 @@ headless-tasks/
 
 ### Tasks DB
 
+#### Core Fields (required — skills error if missing)
+
 | Property | Notion Type | Description |
 |---|---|---|
-| **Core** | | |
 | Title | Title | Task name |
-| Description | Rich Text | Detailed description for agent/member execution |
-| Acceptance Criteria | Rich Text | Completion conditions |
-| **Status** | | |
-| Status | Status | Backlog / Ready / In Progress / In Review / Done |
-| Blocked By | Relation (self) | Dependency tasks |
-| **People & Teams** | | |
-| Assignees | Person (multi) | Assigned members (multiple) |
-| Reporter | Person | Task creator |
-| Reviewers | Person (multi) | Review/approval assignees |
-| Team | Relation -> Teams | Owning team |
-| **Classification** | | |
+| Description | Rich Text | Orchestrator-written detail |
+| Acceptance Criteria | Rich Text | Verifiable completion conditions |
+| Status | Status | Backlog / Ready / In Progress / In Review / Done / Blocked |
+| Blocked By | Relation (self) | Dependency tasks. Empty = actionable |
 | Priority | Select | Urgent / High / Medium / Low |
-| Project | Relation -> Projects | Parent project |
+| Executor | Select | claude-code / cowork / antigravity / human |
+| Requires Review | Checkbox | On → must pass In Review. Off → can go directly to Done |
+| Execution Plan | Rich Text | Orchestrator's plan written before dispatch. write-once |
+| Working Directory | Rich Text | claude-code: absolute path. cowork: workspace-relative path |
+| Session Reference | Rich Text | Written after dispatch: tmux session name / Cowork task ID |
+| Dispatched At | Date | Dispatch timestamp. Used for timeout detection |
+| Agent Output | Rich Text | Execution result |
+| Error Message | Rich Text | Written on failure only. Query with "Error Message is not empty" |
+
+#### Extended Fields (optional — graceful degradation if absent)
+
+| Property | Notion Type | Description |
+|---|---|---|
+| Context | Rich Text | Background, references, constraints |
+| Artifacts | Rich Text | PR URLs, file paths (newline-separated) |
+| Repository | URL | GitHub repository URL |
+| Due Date | Date | Deadline |
 | Tags | Multi-select | Free-form tags |
 | Parent Task | Relation (self) | Parent task (subtask hierarchy) |
-| **Schedule** | | |
-| Due Date | Date | Deadline |
-| Estimate | Number | Estimated hours |
-| **Agent Execution** | | |
-| Agent Type | Select | claude-code / human / review |
-| Agent Output | Rich Text | Execution result |
-| Artifacts | URL | Deliverable links (PR URLs, file paths) |
-| **Context** | | |
-| Context | Rich Text | Background, references, constraints |
+| Project | Relation -> Projects | Parent project |
+| Team | Relation -> Teams | Owning team |
+| Assignees | Person (multi) | Human executor assignment |
+
+#### Schema Contract
+
+- **Core fields**: 変更・削除不可（スキルが依存）
+- **Extended fields**: リネーム・削除可能（機能が無効になる場合あり）
+- **User-defined fields**: 完全自由（Sprint, Epic, Story Points 等を自由に追加可）
 
 ### Teams DB
 
@@ -124,12 +134,14 @@ headless-tasks/
 
 ### Schema Design Decisions
 
-- **Assignees (multi-person)**: Supports pair work, mob programming, agent+human collaboration
-- **Reporter**: Tracks who requested what. Essential for team accountability
-- **Reviewers**: Explicit review assignees for In Review status. Required for human review of agent outputs
-- **Team as Relation**: Enables team-based views and member lookups (not just a Select label)
-- **Project as Relation**: Enables cross-project dashboards and project-level gantt charts
-- **Blocked By (separate from Parent Task)**: "Decomposition" (parent-child) and "dependency" (blocked-by) are distinct concepts. Agents use Blocked By to determine actionable tasks
+- **Executor (replaces Agent Type)**: Separates executor runtime (claude-code/cowork/antigravity/human) from role semantics
+- **Requires Review**: Decouples review requirement from executor type. claude-code tasks can skip review if unchecked
+- **Execution Plan**: Human-readable plan stored for Notion review. The actual dispatch prompt is assembled from multiple fields using a template
+- **Working Directory**: Semantics vary by executor (absolute path for claude-code, workspace-relative for cowork)
+- **Session Reference**: Written after dispatch so the Orchestrator can track running processes
+- **Dispatched At**: Timestamp for timeout and stale-task detection
+- **Error Message (separate from Agent Output)**: Allows `Error Message is not empty` queries without polluting output
+- **Blocked By (separate from Parent Task)**: "Decomposition" (parent-child) and "dependency" (blocked-by) are distinct concepts
 - **Comments**: Use Notion's built-in page comments (no schema addition needed)
 
 ## Skills Design

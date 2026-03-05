@@ -1,0 +1,177 @@
+import { describe, it, expect } from "vitest";
+import app from "./app.js";
+import type { Task, TasksResponse } from "./types.js";
+
+// Minimal valid Task with all Core fields
+function makeTask(overrides: Partial<Task> = {}): Task {
+  return {
+    id: "task-1",
+    title: "Test Task",
+    description: "desc",
+    acceptanceCriteria: "criteria",
+    status: "Ready",
+    blockedBy: [],
+    priority: "Medium",
+    executor: "claude-code",
+    requiresReview: true,
+    executionPlan: "step 1, step 2",
+    workingDirectory: "/home/user/project",
+    sessionReference: "",
+    dispatchedAt: null,
+    agentOutput: "",
+    errorMessage: "",
+    context: "",
+    artifacts: "",
+    repository: null,
+    dueDate: null,
+    tags: [],
+    parentTaskId: null,
+    project: null,
+    team: null,
+    assignees: [],
+    url: "https://notion.so/task-1",
+    ...overrides,
+  };
+}
+
+describe("GET /api/health", () => {
+  it("returns ok status", async () => {
+    const res = await app.request("/api/health");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe("ok");
+    expect(body.timestamp).toBeDefined();
+  });
+});
+
+describe("GET /api/tasks (no data)", () => {
+  it("returns empty tasks array before any data is posted", async () => {
+    const res = await app.request("/api/tasks");
+    expect(res.status).toBe(200);
+    const body = await res.json() as TasksResponse;
+    expect(body.tasks).toEqual([]);
+    expect(body.updatedAt).toBeDefined();
+  });
+});
+
+describe("POST /api/data and GET /api/tasks", () => {
+  it("stores and returns posted task data", async () => {
+    const task = makeTask();
+    const payload: TasksResponse = {
+      tasks: [task],
+      updatedAt: "2026-03-05T00:00:00.000Z",
+    };
+
+    const postRes = await app.request("/api/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    expect(postRes.status).toBe(200);
+
+    const getRes = await app.request("/api/tasks");
+    const body = await getRes.json() as TasksResponse;
+    expect(body.tasks).toHaveLength(1);
+    expect(body.tasks[0].id).toBe("task-1");
+  });
+
+  it("preserves all Core fields through the data pipeline", async () => {
+    const task = makeTask({
+      executor: "cowork",
+      requiresReview: false,
+      executionPlan: "Build the feature",
+      workingDirectory: "packages/api",
+      sessionReference: "cowork-task-42",
+      dispatchedAt: "2026-03-05T10:00:00.000Z",
+      errorMessage: "",
+    });
+    const payload: TasksResponse = { tasks: [task], updatedAt: "2026-03-05T10:00:00.000Z" };
+
+    await app.request("/api/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const getRes = await app.request("/api/tasks");
+    const body = await getRes.json() as TasksResponse;
+    const returned = body.tasks[0];
+
+    expect(returned.executor).toBe("cowork");
+    expect(returned.requiresReview).toBe(false);
+    expect(returned.executionPlan).toBe("Build the feature");
+    expect(returned.workingDirectory).toBe("packages/api");
+    expect(returned.sessionReference).toBe("cowork-task-42");
+    expect(returned.dispatchedAt).toBe("2026-03-05T10:00:00.000Z");
+  });
+
+  it("preserves Blocked status and errorMessage", async () => {
+    const task = makeTask({
+      status: "Blocked",
+      errorMessage: "tsc failed: cannot find module './foo'",
+      agentOutput: "",
+    });
+    const payload: TasksResponse = { tasks: [task], updatedAt: "2026-03-05T10:00:00.000Z" };
+
+    await app.request("/api/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const getRes = await app.request("/api/tasks");
+    const body = await getRes.json() as TasksResponse;
+    const returned = body.tasks[0];
+
+    expect(returned.status).toBe("Blocked");
+    expect(returned.errorMessage).toBe("tsc failed: cannot find module './foo'");
+    // Error info must NOT bleed into agentOutput
+    expect(returned.agentOutput).toBe("");
+  });
+
+  it("stores multiple tasks preserving per-task executor types", async () => {
+    const tasks: Task[] = [
+      makeTask({ id: "t1", executor: "claude-code", requiresReview: true }),
+      makeTask({ id: "t2", executor: "human", requiresReview: false }),
+      makeTask({ id: "t3", executor: "antigravity", requiresReview: true }),
+    ];
+    const payload: TasksResponse = { tasks, updatedAt: "2026-03-05T12:00:00.000Z" };
+
+    await app.request("/api/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const getRes = await app.request("/api/tasks");
+    const body = await getRes.json() as TasksResponse;
+
+    expect(body.tasks).toHaveLength(3);
+    const byId = Object.fromEntries(body.tasks.map((t) => [t.id, t]));
+    expect(byId["t1"].executor).toBe("claude-code");
+    expect(byId["t2"].executor).toBe("human");
+    expect(byId["t3"].executor).toBe("antigravity");
+    expect(byId["t2"].requiresReview).toBe(false);
+  });
+
+  it("overwrites cached data on second POST", async () => {
+    const first: TasksResponse = { tasks: [makeTask({ id: "old" })], updatedAt: "2026-03-05T00:00:00.000Z" };
+    const second: TasksResponse = { tasks: [makeTask({ id: "new" })], updatedAt: "2026-03-05T01:00:00.000Z" };
+
+    await app.request("/api/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(first),
+    });
+    await app.request("/api/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(second),
+    });
+
+    const getRes = await app.request("/api/tasks");
+    const body = await getRes.json() as TasksResponse;
+    expect(body.tasks).toHaveLength(1);
+    expect(body.tasks[0].id).toBe("new");
+  });
+});

@@ -25,6 +25,18 @@ At the start of each session, read the config page to get database IDs:
 
 Use these IDs for all subsequent Notion operations.
 
+## Schema Validation
+
+After loading config, verify that all Core fields exist in the Tasks DB by calling `retrieve-a-database` with `tasksDatabaseId` and checking the `properties` object.
+
+Required Core fields: `Title`, `Description`, `Acceptance Criteria`, `Status`, `Blocked By`, `Priority`, `Executor`, `Requires Review`, `Execution Plan`, `Working Directory`, `Session Reference`, `Dispatched At`, `Agent Output`, `Error Message`.
+
+If any Core field is missing, **stop and report**:
+```
+スキーマチェック失敗: Core フィールド '<field name>' が Tasks DB に存在しません。
+task-setup スキルを再実行するか、Notion でフィールドを手動追加してください。
+```
+
 ## Notion MCP Tool Reference
 
 - `create-a-page` — Create a task (parent: `{ "database_id": tasksDatabaseId }`)
@@ -36,40 +48,53 @@ Use these IDs for all subsequent Notion operations.
 
 ## Schema: Property Name → Notion Type
 
+### Core Fields (required — verify existence at session start)
+
 | Property | Type | Notes |
 |---|---|---|
 | Title | title | Task name |
-| Description | rich_text | Agent-executable detail |
+| Description | rich_text | Orchestrator-written detail |
 | Acceptance Criteria | rich_text | Verifiable completion conditions |
 | Status | status | Backlog → Ready → In Progress → In Review → Done |
-| Blocked By | relation | Self-relation (dependency) |
-| Assignees | people | Multi-person |
-| Reporter | people | Creator |
-| Reviewers | people | For In Review |
-| Team | relation | → Teams DB |
+| Blocked By | relation | Self-relation (dependency). Empty = actionable |
 | Priority | select | Urgent / High / Medium / Low |
-| Project | relation | → Projects DB |
+| Executor | select | claude-code / cowork / antigravity / human |
+| Requires Review | checkbox | On → must pass In Review. Off → can go directly to Done |
+| Execution Plan | rich_text | Orchestrator's plan written before dispatch. write-once |
+| Working Directory | rich_text | claude-code: absolute path. cowork: workspace-relative path |
+| Session Reference | rich_text | Written after dispatch: tmux session name / Cowork task ID |
+| Dispatched At | date | Dispatch timestamp. Used for timeout detection |
+| Agent Output | rich_text | Execution result |
+| Error Message | rich_text | Written on failure only. Query with "Error Message is not empty" |
+
+### Extended Fields (optional — graceful degradation if absent)
+
+| Property | Type | Notes |
+|---|---|---|
+| Context | rich_text | Background info, constraints |
+| Artifacts | rich_text | PR URLs, file paths (newline-separated) |
+| Repository | url | GitHub repository URL |
+| Due Date | date | ISO format |
 | Tags | multi_select | Free tags |
 | Parent Task | relation | Self-relation (hierarchy) |
-| Due Date | date | ISO format |
-| Estimate | number | Hours |
-| Agent Type | select | claude-code / human / review |
-| Agent Output | rich_text | Execution result |
-| Artifacts | url | PR links, file paths |
-| Context | rich_text | Background info |
+| Project | relation | → Projects DB |
+| Team | relation | → Teams DB |
+| Assignees | people | Human executor assignment |
 
 ## State Transition Rules
 
 Valid transitions:
 - Backlog → Ready (when description + acceptance criteria are filled)
-- Ready → In Progress (when someone starts working)
-- In Progress → In Review (when work is done, needs review)
-- In Progress → Blocked (when blocked by another task)
-- In Review → Done (when reviewers approve)
+- Ready → In Progress (when dispatched to executor)
+- In Progress → In Review (when `Requires Review` is checked and work is done)
+- In Progress → Done (when `Requires Review` is unchecked and work is done)
+- In Progress → Blocked (when blocked by another task or error)
+- In Review → Done (when review approved)
 - In Review → In Progress (when changes requested)
 - Any → Backlog (deprioritize)
 
-**Never skip In Review for tasks with `Agent Type: claude-code`.** Agent outputs must be reviewed.
+**When `Requires Review` is Off**, skip In Review and transition directly to Done.
+**When writing errors**, set Status to Blocked and write the error message in `Error Message` (not in Agent Output).
 
 ## "Next Task" Logic
 

@@ -36,7 +36,8 @@ Create each database using `create-a-database` with `PARENT_PAGE_ID` as the pare
 
 ### Tasks Database
 
-Properties:
+#### Core Fields (required — skills will error if missing)
+
 | Property | Type | Config |
 |---|---|---|
 | Title | title | — |
@@ -44,20 +45,29 @@ Properties:
 | Acceptance Criteria | rich_text | — |
 | Status | status | Groups: Not Started (Backlog, Ready), In Progress (In Progress, In Review), Complete (Done) |
 | Blocked By | relation | Self-relation to Tasks DB |
-| Assignees | people | — |
-| Reporter | people | — |
-| Reviewers | people | — |
-| Team | relation | → Teams DB |
 | Priority | select | Options: Urgent, High, Medium, Low |
-| Project | relation | → Projects DB |
+| Executor | select | Options: claude-code, cowork, antigravity, human |
+| Requires Review | checkbox | — |
+| Execution Plan | rich_text | — |
+| Working Directory | rich_text | — |
+| Session Reference | rich_text | — |
+| Dispatched At | date | — |
+| Agent Output | rich_text | — |
+| Error Message | rich_text | — |
+
+#### Extended Fields (optional — graceful degradation if absent)
+
+| Property | Type | Config |
+|---|---|---|
+| Context | rich_text | — |
+| Artifacts | rich_text | — |
+| Repository | url | — |
+| Due Date | date | — |
 | Tags | multi_select | — |
 | Parent Task | relation | Self-relation to Tasks DB |
-| Due Date | date | — |
-| Estimate | number | Format: number |
-| Agent Type | select | Options: claude-code, human, review |
-| Agent Output | rich_text | — |
-| Artifacts | url | — |
-| Context | rich_text | — |
+| Project | relation | → Projects DB |
+| Team | relation | → Teams DB |
+| Assignees | people | — |
 
 Note the returned database ID as `TASKS_DB_ID`.
 
@@ -88,6 +98,15 @@ Create a page using `create-a-page` under `PARENT_PAGE_ID`:
 ```
 
 Replace the placeholders with the actual IDs from Step 4.
+
+After the JSON block, append the following as plain text:
+
+```
+## Schema Contract
+- Core fields: 変更・削除不可（スキルが依存）
+- Extended fields: リネーム・削除可能（機能が無効になる場合あり）
+- User-defined fields: 完全自由（Sprint, Epic, Story Points 等を自由に追加可）
+```
 
 ## Step 6: Verify
 

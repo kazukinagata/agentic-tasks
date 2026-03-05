@@ -3,22 +3,27 @@ export interface Task {
   title: string;
   description: string;
   acceptanceCriteria: string;
-  status: "Backlog" | "Ready" | "In Progress" | "In Review" | "Done";
+  status: "Backlog" | "Ready" | "In Progress" | "In Review" | "Done" | "Blocked";
   blockedBy: string[];
-  assignees: Person[];
-  reporter: Person | null;
-  reviewers: Person[];
-  team: string | null;
   priority: "Urgent" | "High" | "Medium" | "Low" | null;
-  project: string | null;
+  executor: "claude-code" | "cowork" | "antigravity" | "human" | null;
+  requiresReview: boolean;
+  executionPlan: string;
+  workingDirectory: string;
+  sessionReference: string;
+  dispatchedAt: string | null;
+  agentOutput: string;
+  errorMessage: string;
+  // Extended fields (optional)
+  context: string;
+  artifacts: string;
+  repository: string | null;
+  dueDate: string | null;
   tags: string[];
   parentTaskId: string | null;
-  dueDate: string | null;
-  estimate: number | null;
-  agentType: "claude-code" | "human" | "review" | null;
-  agentOutput: string;
-  artifacts: string;
-  context: string;
+  project: string | null;
+  team: string | null;
+  assignees: Person[];
   url: string;
 }
 

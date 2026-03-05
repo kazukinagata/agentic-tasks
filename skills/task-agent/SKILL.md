@@ -23,31 +23,86 @@ At the start of each session, read the config page to get database IDs:
    - `teamsDatabaseId`
    - `projectsDatabaseId`
 
+## Schema Validation
+
+After loading config, verify Core fields exist in the Tasks DB (same check as task-manage).
+
+Required Core fields: `Title`, `Description`, `Acceptance Criteria`, `Status`, `Blocked By`, `Priority`, `Executor`, `Requires Review`, `Execution Plan`, `Working Directory`, `Session Reference`, `Dispatched At`, `Agent Output`, `Error Message`.
+
+If any Core field is missing, stop and report which field is absent.
+
 ## Execution Flow
 
 1. **Fetch actionable tasks**: Query Notion for tasks where:
    - Status = "Ready"
    - Blocked By is empty (no unresolved dependencies)
-   - Agent Type = "claude-code"
+   - Executor = "claude-code" (or specified executor)
 2. **Sort by priority**: Urgent > High > Medium > Low, then by Due Date
 3. **For each task**:
-   a. Read the Description and Acceptance Criteria
+   a. Read all Core fields and Extended fields (Context, Repository)
    b. Present the task to the user and ask for confirmation (unless --auto mode)
-   c. Spawn the `task-agent` agent to execute the task
-   d. Record the result in Agent Output
-   e. Update Status to "In Review"
-   f. If execution failed, update Status to "Blocked" and add a note
+   c. Set Status to "In Progress"
+   d. Dispatch according to the Executor field (see below)
+   e. Write `Dispatched At` timestamp
+   f. Record session reference in `Session Reference`
+   g. On success: write result to `Agent Output`, transition status per `Requires Review`
+   h. On failure: write error to `Error Message`, set Status to "Blocked"
 
-## Spawning the Agent
+## Dispatch by Executor
 
-Use the Agent tool with:
-- `subagent_type`: "task-agent" (custom agent defined in this plugin)
-- `prompt`: Include the task's Description, Acceptance Criteria, and Context
-- `mode`: "plan" (requires plan approval before making changes)
+### claude-code
+
+Spawn the `task-agent` agent using the Agent tool with the assembled prompt (see below).
+After spawning, record the tmux session name or process ID in `Session Reference`.
+
+### cowork
+
+Create a scheduled task in Cowork with the assembled prompt.
+Record the Cowork task ID in `Session Reference`.
+
+### antigravity
+
+Dispatch method TBD. Record any returned reference ID in `Session Reference`.
+
+### human
+
+Assign `Assignees`, set Status to "In Progress", and notify via comment.
+Do not write `Dispatched At` or `Session Reference`.
+
+## Dispatch Prompt Template
+
+When dispatching to claude-code, cowork, or antigravity, assemble the prompt as follows:
+
+```
+# <Title>
+
+## Description
+<Description>
+
+## Acceptance Criteria
+<Acceptance Criteria>
+
+## Context
+<Context>
+
+## Execution Plan
+<Execution Plan>
+
+## Environment
+- Repository: <Repository>
+- Working Directory: <Working Directory>
+
+## On Completion
+Update Notion page <Page ID> with results in Agent Output field and set Status to "In Review" (or "Done" if Requires Review is unchecked).
+```
+
+- `<Page ID>` = the Notion page ID returned when the task was created (from `id` field)
+- Omit sections whose source field is empty
+- `Execution Plan` is written by the Orchestrator before dispatch; do not modify it
 
 ## Safety
 
 - **Default: one task at a time with user confirmation**
 - Only skip confirmation if the user explicitly says "auto" or "自動"
-- Always set `mode: "plan"` so the agent must get approval before code changes
-- After execution, the task moves to "In Review" — never directly to "Done"
+- After execution, if `Requires Review` is checked, move to "In Review"; otherwise move to "Done"
+- Never transition directly from In Progress to Done when `Requires Review` is on
