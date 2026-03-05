@@ -11,6 +11,5 @@
       "type": "http",
       "url": "https://mcp.notion.com/mcp"
     }
-  },
-  "hooks": "./hooks/hooks.json"
+  }
 }
