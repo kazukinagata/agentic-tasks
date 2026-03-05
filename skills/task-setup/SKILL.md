@@ -13,9 +13,9 @@ All database operations are performed via Notion MCP tools (OAuth — no token n
 
 ## Step 1: Verify Notion MCP Connection
 
-Call `search` with query "test" to confirm the Notion MCP OAuth connection is working.
+Call `notion-search` with query "test" to confirm the Notion MCP OAuth connection is working.
 
-If it fails, tell the user to run `/mcp` in Claude Code to authenticate with Notion, then retry.
+If it fails, report the error to the user and stop.
 
 ## Step 2: Choose Parent Page Location
 
@@ -24,7 +24,7 @@ Use `AskUserQuestion` to ask:
 
 ## Step 3: Create Parent Page
 
-Create a parent page using `create-a-page`:
+Create a parent page using `notion-create-pages`:
 - Title: "Headless Tasks" (or as specified by user)
 - Parent: the page the user specified, or workspace root if blank
 
@@ -32,19 +32,22 @@ Note the returned page ID as `PARENT_PAGE_ID`.
 
 ## Step 4: Create Databases
 
-Create each database using `create-a-database` with `PARENT_PAGE_ID` as the parent.
+Create each database using `notion-create-database` with `PARENT_PAGE_ID` as the parent.
 
-### Tasks Database
+**IMPORTANT: Relations must be added AFTER creating the database, one at a time via `notion-update-data-source`.** Do NOT include relations in the initial `notion-create-database` call — add them separately in Step 4b. Adding multiple relations in a single `notion-update-data-source` call causes an internal server error; each relation must be its own call.
 
-#### Core Fields (required — skills will error if missing)
+### Step 4a: Create databases (no relations yet)
+
+#### Tasks Database
+
+Create with all non-relation fields:
 
 | Property | Type | Config |
 |---|---|---|
 | Title | title | — |
 | Description | rich_text | — |
 | Acceptance Criteria | rich_text | — |
-| Status | status | Groups: Not Started (Backlog, Ready), In Progress (In Progress, In Review), Complete (Done) |
-| Blocked By | relation | Self-relation to Tasks DB |
+| Status | select | Options: Backlog, Ready, In Progress, In Review, Done, Blocked |
 | Priority | select | Options: Urgent, High, Medium, Low |
 | Executor | select | Options: claude-code, cowork, antigravity, human |
 | Requires Review | checkbox | — |
@@ -54,38 +57,45 @@ Create each database using `create-a-database` with `PARENT_PAGE_ID` as the pare
 | Dispatched At | date | — |
 | Agent Output | rich_text | — |
 | Error Message | rich_text | — |
-
-#### Extended Fields (optional — graceful degradation if absent)
-
-| Property | Type | Config |
-|---|---|---|
 | Context | rich_text | — |
 | Artifacts | rich_text | — |
 | Repository | url | — |
 | Due Date | date | — |
 | Tags | multi_select | — |
-| Parent Task | relation | Self-relation to Tasks DB |
-| Project | relation | → Projects DB |
-| Team | relation | → Teams DB |
 | Assignees | people | — |
+| Branch | rich_text | git ブランチ名。Executor=claude-code で git worktree を使う場合に設定 |
 
-Note the returned database ID as `TASKS_DB_ID`.
+Note the returned data source ID as `TASKS_DS_ID`.
 
-### Teams Database
+#### Teams Database
 
-Properties: Name (title), Members (people), Tasks (relation → Tasks DB)
+Create with: Name (title), Members (people)
 
-Note the returned database ID as `TEAMS_DB_ID`.
+Note the returned data source ID as `TEAMS_DS_ID`.
 
-### Projects Database
+#### Projects Database
 
-Properties: Name (title), Owner (people), Team (relation → Teams DB), Status (select: Active/On Hold/Completed/Archived), Tasks (relation → Tasks DB), Due Date (date)
+Create with: Name (title), Owner (people), Status (select: Active/On Hold/Completed/Archived), Due Date (date)
 
-Note the returned database ID as `PROJECTS_DB_ID`.
+Note the returned data source IDs as `PROJECTS_DS_ID`.
+
+### Step 4b: Add relations one at a time
+
+**Each `notion-update-data-source` call must contain exactly ONE `ADD COLUMN` statement.** Multiple statements in one call will fail with a 500 error.
+
+Add the following relations in separate calls:
+
+1. Tasks ← `Blocked By` → Tasks (self): `ADD COLUMN "Blocked By" RELATION('<TASKS_DS_ID>')`
+2. Tasks ← `Parent Task` → Tasks (self): `ADD COLUMN "Parent Task" RELATION('<TASKS_DS_ID>')`
+3. Tasks ← `Project` → Projects (dual, syncs Tasks on Projects): `ADD COLUMN "Project" RELATION('<PROJECTS_DS_ID>', DUAL 'Tasks' 'tasks')`
+4. Tasks ← `Team` → Teams (dual, syncs Tasks on Teams): `ADD COLUMN "Team" RELATION('<TEAMS_DS_ID>', DUAL 'Tasks' 'tasks')`
+5. Projects ← `Team` → Teams: `ADD COLUMN "Team" RELATION('<TEAMS_DS_ID>')`
+
+Steps 3 and 4 automatically create the synced `Tasks` property on Projects/Teams respectively, so no separate calls are needed for those.
 
 ## Step 5: Create Config Page
 
-Create a page using `create-a-page` under `PARENT_PAGE_ID`:
+Create a page using `notion-create-pages` under `PARENT_PAGE_ID`:
 - Title: "Headless Tasks Config"
 - Body: a code block (language: `json`) containing:
 
@@ -113,10 +123,9 @@ After the JSON block, append the following as plain text:
 Use `AskUserQuestion` to confirm:
 > "Setup complete! I've created the Headless Tasks workspace in Notion with Tasks, Teams, and Projects databases, and a Config page storing the database IDs. Would you like me to create a test task to verify everything is working?"
 
-If yes, create a test task using `create-a-page` with the Tasks database as parent:
+If yes, create a test task using `notion-create-pages` with the Tasks database as parent:
 - Title: "Test task — delete me"
-- Status: Ready
-- Priority: Medium
+- properties: `{"Status": "Ready", "Priority": "Medium"}`
 
 Tell the user setup is complete and they can start using:
 - Natural language task management (`task-manage` skill)
