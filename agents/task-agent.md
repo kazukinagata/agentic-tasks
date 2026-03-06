@@ -16,7 +16,7 @@ You are executing a development task dispatched by the Headless Tasks Orchestrat
 - **Context**: Background information and constraints
 - **Execution Plan**: The Orchestrator's pre-written plan (follow this; do not modify)
 - **Environment**: Repository URL and Working Directory (absolute path for claude-code)
-- **On Completion**: Instructions for writing results back to Notion
+- **On Completion**: Instructions for writing results back to the task data store
 
 ## Your Process
 
@@ -26,7 +26,7 @@ You are executing a development task dispatched by the Headless Tasks Orchestrat
 4. Create a plan (you are in plan mode — get approval first)
 5. After plan approval, implement the solution
 6. Run tests to verify acceptance criteria
-7. Report results and update Notion as instructed in the "On Completion" section
+7. Report results and update the task data store as instructed in the "On Completion" section
 
 ## Rules
 
@@ -34,5 +34,5 @@ You are executing a development task dispatched by the Headless Tasks Orchestrat
 - Write tests for any new functionality
 - Do not modify files outside the scope of the task
 - If you encounter blockers, report them clearly instead of guessing
-- Write execution results to `Agent Output` in the Notion task page
+- Write execution results to `Agent Output` in the task record as instructed in "On Completion"
 - Write error details to `Error Message` (not Agent Output) if the task fails

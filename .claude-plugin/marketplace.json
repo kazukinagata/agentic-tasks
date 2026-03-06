@@ -4,7 +4,7 @@
     "name": "kazukinagata"
   },
   "metadata": {
-    "description": "AI-native task management plugin powered by Notion"
+    "description": "AI-native task management plugin for agents and humans"
   },
   "plugins": [
     {
@@ -13,14 +13,14 @@
         "source": "github",
         "repo": "kazukinagata/headless-tasks"
       },
-      "description": "AI-native task management powered by Notion. Natural language CRUD, real-time HTML views (kanban, list), and autonomous task execution.",
+      "description": "AI-native task management for agents and humans. Natural language CRUD, real-time HTML views (kanban, list), and autonomous task execution. Supports any schema-definable data source.",
       "version": "0.1.0",
       "author": {
         "name": "kazukinagata"
       },
       "license": "MIT",
       "category": "productivity",
-      "tags": ["notion", "tasks", "kanban", "agent"]
+      "tags": ["tasks", "kanban", "agent", "ai-native", "headless"]
     }
   ]
 }

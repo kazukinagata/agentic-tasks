@@ -12,28 +12,41 @@ user-invocable: true
 
 You orchestrate the autonomous execution of tasks by AI agents.
 
-## Database Configuration
+## Provider Detection (once per session)
 
-At the start of each session, read the config page to get database IDs:
+At the start of each session, determine the active provider using the following layered check. Skip if already determined in this conversation.
 
-1. Use `search` with query "Headless Tasks Config" to find the config page
-2. Retrieve the page body using `retrieve-a-page` (or `retrieve-block-children` for the content)
-3. Parse the JSON code block to extract:
-   - `tasksDatabaseId`
-   - `teamsDatabaseId`
-   - `projectsDatabaseId`
+### Layer 1: MCP Tool Auto-Detection
+Inspect which MCP tools are available:
+- `notion-*` tools present → active_provider = **notion**
+- `mcp__airtable__*` tools present → active_provider = **airtable**
+- SQLite/database tools present → active_provider = **sqlite**
+
+If exactly one provider MCP is detected, use it. Load `${CLAUDE_PLUGIN_ROOT}/skills/providers/{active_provider}/SKILL.md` if available, then continue.
+
+### Layer 2: Conflict Resolution (multiple provider MCPs detected)
+If multiple provider MCPs are detected, determine the environment:
+- **Claude Code**: Check `env.HEADLESS_TASKS_PROVIDER` in `~/.claude/settings.json`
+- **Cowork / Global Instructions**: Look for `HEADLESS_TASKS_PROVIDER: <value>` in the Global Instructions or CLAUDE.md
+
+If a value is found, use it as active_provider and load the corresponding provider SKILL.md.
+
+### Layer 3: Ask User
+If provider is still undetermined, use AskUserQuestion:
+> "Multiple data source MCPs are available. Which provider should I use for headless-tasks? Available: [list detected providers]"
+
+### No MCP Detected
+If no provider MCP is found at all, inform the user they need to run the **task-setup** skill first to configure a data source, then stop.
 
 ## Schema Validation
 
-After loading config, verify Core fields exist in the Tasks DB (same check as task-manage).
-
-Required Core fields: `Title`, `Description`, `Acceptance Criteria`, `Status`, `Blocked By`, `Priority`, `Executor`, `Requires Review`, `Execution Plan`, `Working Directory`, `Session Reference`, `Dispatched At`, `Agent Output`, `Error Message`.
+After loading the provider SKILL.md and config, verify Core fields exist in the Tasks data source (same check as task-manage). Required Core fields: `Title`, `Description`, `Acceptance Criteria`, `Status`, `Blocked By`, `Priority`, `Executor`, `Requires Review`, `Execution Plan`, `Working Directory`, `Session Reference`, `Dispatched At`, `Agent Output`, `Error Message`.
 
 If any Core field is missing, stop and report which field is absent.
 
 ## Execution Flow
 
-1. **Fetch actionable tasks**: Query Notion for tasks where:
+1. **Fetch actionable tasks**: Query for tasks where:
    - Status = "Ready"
    - Blocked By is empty (no unresolved dependencies)
    - Executor = "claude-code" (or specified executor)
@@ -71,7 +84,8 @@ Do not write `Dispatched At` or `Session Reference`.
 
 ## Dispatch Prompt Template
 
-When dispatching to claude-code, cowork, or antigravity, assemble the prompt as follows:
+When dispatching to claude-code, cowork, or antigravity, assemble the prompt as follows.
+Replace `<On Completion>` with the provider-specific update instruction from the active provider's SKILL.md (Task Record Reference section).
 
 ```
 # <Title>
@@ -93,10 +107,9 @@ When dispatching to claude-code, cowork, or antigravity, assemble the prompt as 
 - Working Directory: <Working Directory>
 
 ## On Completion
-Update Notion page <Page ID> with results in Agent Output field and set Status to "In Review" (or "Done" if Requires Review is unchecked).
+<On Completion: provider-specific instruction to write results to Agent Output and update Status>
 ```
 
-- `<Page ID>` = the Notion page ID returned when the task was created (from `id` field)
 - Omit sections whose source field is empty
 - `Execution Plan` is written by the Orchestrator before dispatch; do not modify it
 
