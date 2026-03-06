@@ -2,8 +2,7 @@
 name: task-setup
 description: >
   Use when the user says "setup headless tasks", "initialize task management",
-  "configure notion tasks", "セットアップ", "タスク管理の初期設定", or needs to
-  set up Notion databases for the headless-tasks plugin.
+  "configure notion tasks", or needs to set up Notion databases for the headless-tasks plugin.
 ---
 
 # Headless Tasks — Setup Guide
@@ -49,7 +48,7 @@ Create with all non-relation fields:
 | Acceptance Criteria | rich_text | — |
 | Status | select | Options: Backlog, Ready, In Progress, In Review, Done, Blocked |
 | Priority | select | Options: Urgent, High, Medium, Low |
-| Executor | select | Options: claude-code, cowork, antigravity, human |
+| Executor | select | Options: claude-code, cowork, human |
 | Requires Review | checkbox | — |
 | Execution Plan | rich_text | — |
 | Working Directory | rich_text | — |
@@ -63,7 +62,7 @@ Create with all non-relation fields:
 | Due Date | date | — |
 | Tags | multi_select | — |
 | Assignees | people | — |
-| Branch | rich_text | git ブランチ名。Executor=claude-code で git worktree を使う場合に設定 |
+| Branch | rich_text | Git branch name. Set when using git worktree with Executor=claude-code |
 
 Note the returned data source ID as `TASKS_DS_ID`.
 
@@ -113,9 +112,9 @@ After the JSON block, append the following as plain text:
 
 ```
 ## Schema Contract
-- Core fields: 変更・削除不可（スキルが依存）
-- Extended fields: リネーム・削除可能（機能が無効になる場合あり）
-- User-defined fields: 完全自由（Sprint, Epic, Story Points 等を自由に追加可）
+- Core fields: Do not rename or delete (skills depend on them)
+- Extended fields: May be renamed or deleted (some features will stop working)
+- User-defined fields: Fully customizable (add Sprint, Epic, Story Points, etc. as needed)
 ```
 
 ## Step 6: Verify
@@ -130,3 +129,7 @@ If yes, create a test task using `notion-create-pages` with the Tasks database a
 Tell the user setup is complete and they can start using:
 - Natural language task management (`task-manage` skill)
 - Visual views (`task-view` skill)
+
+## Language
+
+Always communicate with the user in the language they are using.

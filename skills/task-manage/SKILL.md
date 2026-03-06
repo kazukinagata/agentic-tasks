@@ -2,10 +2,8 @@
 name: task-manage
 description: >
   Use when the user wants to create, update, delete, or query tasks.
-  Triggers on: "タスク追加", "タスク作成", "add task", "create task",
-  "update task", "タスク更新", "done", "完了", "ステータス変更",
-  "タスク一覧", "list tasks", "what's next", "次のタスク",
-  "block", "ブロック", "assign", "アサイン", "prioritize", "優先度".
+  Triggers on: "add task", "create task", "update task", "done", "change status",
+  "list tasks", "what's next", "next task", "block", "assign", "prioritize".
 ---
 
 # Headless Tasks — Task Management
@@ -41,7 +39,7 @@ Then run the appropriate DDL (one `ADD COLUMN` per call):
 |---|---|
 | Status | `ADD COLUMN "Status" SELECT('Backlog':gray, 'Ready':blue, 'In Progress':yellow, 'In Review':orange, 'Done':green, 'Blocked':red)` |
 | Priority | `ADD COLUMN "Priority" SELECT('Urgent':red, 'High':orange, 'Medium':yellow, 'Low':blue)` |
-| Executor | `ADD COLUMN "Executor" SELECT('claude-code':purple, 'cowork':green, 'antigravity':blue, 'human':gray)` |
+| Executor | `ADD COLUMN "Executor" SELECT('claude-code':purple, 'cowork':green, 'human':gray)` |
 | Dispatched At / Due Date | `ADD COLUMN "<field>" DATE` |
 | (other text fields) | `ADD COLUMN "<field>" RICH_TEXT` |
 
@@ -67,7 +65,7 @@ After repair, re-verify and continue. **Never ask the user to manually fix the s
 | Status | select | Backlog / Ready / In Progress / In Review / Done / Blocked |
 | Blocked By | relation | Self-relation (dependency). Empty = actionable |
 | Priority | select | Urgent / High / Medium / Low |
-| Executor | select | claude-code / cowork / antigravity / human |
+| Executor | select | claude-code / cowork / human |
 | Requires Review | checkbox | On → must pass In Review. Off → can go directly to Done |
 | Execution Plan | rich_text | Orchestrator's plan written before dispatch. write-once |
 | Working Directory | rich_text | claude-code: absolute path. cowork: workspace-relative path |
@@ -89,7 +87,7 @@ After repair, re-verify and continue. **Never ask the user to manually fix the s
 | Project | relation | → Projects DB |
 | Team | relation | → Teams DB |
 | Assignees | people | Human executor assignment |
-| Branch | rich_text | git ブランチ名（例: feature/task-slug）。空なら現在ブランチで作業 |
+| Branch | rich_text | Git branch name (e.g. feature/task-slug). Leave blank to work on the current branch |
 
 ## State Transition Rules
 
@@ -108,7 +106,7 @@ Valid transitions:
 
 ## "Next Task" Logic
 
-When the user asks "what should I do next?" or "次のタスク":
+When the user asks "what should I do next?" or "next task":
 
 1. Use `notion-search` to find tasks where Status = "Ready"
    (Filter Blocked By = empty in post-processing, or use `notion-fetch` on the data source)
@@ -118,43 +116,42 @@ When the user asks "what should I do next?" or "次のタスク":
 
 ## Task Creation Best Practices
 
-### 必須確認項目（省略・推測禁止）
+### Required Confirmations (no guessing or omitting)
 
-以下の項目はユーザーが明示していない限り AskUserQuestion で確認すること。
-タスクの説明文から推測して確定してはならない。
+Always confirm the following fields with AskUserQuestion unless the user has explicitly stated them.
+Do NOT infer and commit to values from the task description.
 
-| 項目 | 理由 |
+| Field | Reason |
 |---|---|
-| Executor | 同じタスクでも消化方法が全く異なる |
-| Priority | ユーザーの文脈によって緊急度が変わる |
-| Working Directory | パス間違いはエージェント実行エラーに直結 |
+| Executor | Execution method varies entirely by executor type |
+| Priority | Urgency depends on the user's current context |
+| Working Directory | Wrong path directly causes agent execution errors |
 
-### Executor の選び方（優秀な部下と上司の関係）
+### How to Choose Executor
 
-Executor を自己判断で確定してはならない。
-ユーザーに選択肢と推奨理由を提示して意思決定を委ねる。
+Never decide the Executor on your own.
+Present options and recommended reasons to the user and let them decide.
 
-| Executor | 適したタスク |
+| Executor | Best for |
 |---|---|
-| `claude-code` | コード実装・調査・文書化・スクリプト実行 |
-| `cowork` | Slack連携・外部サービス通知・他者へのヒアリング委任 |
-| `antigravity` | Antigravityプラットフォームでの作業 |
-| `human` | 人間の判断・関係性・直接対話が必須な作業 |
+| `claude-code` | Code implementation, research, documentation, script execution |
+| `cowork` | Slack integration, external service notifications, delegating interviews to others |
+| `human` | Tasks requiring human judgment, relationships, or direct interaction |
 
-AskUserQuestion では各選択肢の説明と推奨理由を description に記載する。
+In AskUserQuestion, include a description with each option explaining why it is recommended.
 
-### Branch（git worktree 対応）
+### Branch (git worktree support)
 
-Executor=claude-code のタスクで対象が git リポジトリの場合:
-- Branch フィールドの設定を提案する（強制ではない）
-- デフォルト候補: `feature/<タスクタイトルのslug>`
-- 設定されていれば task-agent が `git worktree add` で独立環境を作成できる
-- 空の場合は現在ブランチで作業（並行実行には不向き）
+For tasks with Executor=claude-code where the target is a git repository:
+- Suggest setting the Branch field (not mandatory)
+- Default candidate: `feature/<task-title-slug>`
+- If set, task-agent can create an isolated environment via `git worktree add`
+- If left blank, work proceeds on the current branch (not suitable for parallel execution)
 
-### Description と Acceptance Criteria の品質
+### Description and Acceptance Criteria Quality
 
-- Description: 追加質問なしに実行できる詳細度
-- Acceptance Criteria: 「○○コマンドが成功する」「○○ファイルが存在する」など検証可能な形式
+- Description: Detailed enough to execute without additional questions
+- Acceptance Criteria: Verifiable conditions such as "command X succeeds" or "file Y exists"
 
 ## Bulk Operations
 
@@ -182,3 +179,9 @@ curl -s -X POST http://localhost:3456/api/data \
 ```
 
 Silently skip if the server is not running (the `|| true` handles this).
+
+## Language
+
+Always communicate with the user in the language they are using.
+Write all task content (Title, Description, Acceptance Criteria, Execution Plan, etc.)
+in the user's language.
