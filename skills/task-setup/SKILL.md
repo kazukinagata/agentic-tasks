@@ -2,7 +2,7 @@
 name: task-setup
 description: >
   Use when the user says "setup headless tasks", "initialize task management",
-  "configure data source", or needs to set up a data source for the headless-tasks plugin.
+  "configure notion tasks", "configure data source", or needs to set up a data source for the headless-tasks plugin.
 ---
 
 # Headless Tasks — Setup Guide
