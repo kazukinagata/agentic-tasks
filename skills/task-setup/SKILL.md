@@ -2,133 +2,78 @@
 name: task-setup
 description: >
   Use when the user says "setup headless tasks", "initialize task management",
-  "configure notion tasks", or needs to set up Notion databases for the headless-tasks plugin.
+  "configure notion tasks", "configure data source", or needs to set up a data source for the headless-tasks plugin.
 ---
 
 # Headless Tasks — Setup Guide
 
 You are guiding the user through the initial setup of the Headless Tasks plugin.
-All database operations are performed via Notion MCP tools (OAuth — no token needed).
 
-## Step 1: Verify Notion MCP Connection
+## Step 1: Check for Existing MCP Configuration
 
-Call `notion-search` with query "test" to confirm the Notion MCP OAuth connection is working.
+Inspect available MCP tools to detect any already-configured providers:
+- `notion-*` tools present → Notion MCP is already configured
+- `mcp__airtable__*` tools present → Airtable MCP is already configured
+- SQLite/database tools present → SQLite is already configured
 
-If it fails, report the error to the user and stop.
+### If a single provider MCP is already present
+Use AskUserQuestion to confirm:
+> "I detected an existing [provider] MCP connection. Would you like to set up Headless Tasks using [provider]?"
 
-## Step 2: Choose Parent Page Location
+If yes, skip to Step 3 with that provider.
 
-Use `AskUserQuestion` to ask:
-> "Where should I create the Headless Tasks workspace in Notion? Please provide a parent page name or URL. (Leave blank to create at the root of your workspace.)"
+### If multiple provider MCPs are present
+Use AskUserQuestion to ask which one to use:
+> "I detected multiple data source MCPs: [list providers]. Which one should I set up Headless Tasks for?"
 
-## Step 3: Create Parent Page
+Then skip to Step 3 with the selected provider.
 
-Create a parent page using `notion-create-pages`:
-- Title: "Headless Tasks" (or as specified by user)
-- Parent: the page the user specified, or workspace root if blank
+### If no provider MCP is present
+Continue to Step 2 to guide the user through MCP setup.
 
-Note the returned page ID as `PARENT_PAGE_ID`.
+## Step 2: Choose a Data Source and Configure MCP
 
-## Step 4: Create Databases
+Use AskUserQuestion to ask which data source the user wants to use:
+> "Which data source would you like to use for Headless Tasks?
+> - **Notion** — recommended for teams, rich UI, free tier available
+> - Other providers coming soon (SQLite, Airtable, etc.)"
 
-Create each database using `notion-create-database` with `PARENT_PAGE_ID` as the parent.
+Then guide MCP setup based on the environment:
 
-**IMPORTANT: Relations must be added AFTER creating the database, one at a time via `notion-update-data-source`.** Do NOT include relations in the initial `notion-create-database` call — add them separately in Step 4b. Adding multiple relations in a single `notion-update-data-source` call causes an internal server error; each relation must be its own call.
+### Determining the Environment
 
-### Step 4a: Create databases (no relations yet)
+- **Claude Code**: `~/.claude/settings.json` exists or `CLAUDE_PLUGIN_ROOT` is set
+- **Cowork**: Global Instructions / CLAUDE.md is accessible from the current context
 
-#### Tasks Database
+### Claude Code — MCP Setup Instructions
 
-Create with all non-relation fields:
+Add the following to `~/.claude/settings.json` under `"mcpServers"`:
 
-| Property | Type | Config |
-|---|---|---|
-| Title | title | — |
-| Description | rich_text | — |
-| Acceptance Criteria | rich_text | — |
-| Status | select | Options: Backlog, Ready, In Progress, In Review, Done, Blocked |
-| Priority | select | Options: Urgent, High, Medium, Low |
-| Executor | select | Options: claude-code, cowork, human |
-| Requires Review | checkbox | — |
-| Execution Plan | rich_text | — |
-| Working Directory | rich_text | — |
-| Session Reference | rich_text | — |
-| Dispatched At | date | — |
-| Agent Output | rich_text | — |
-| Error Message | rich_text | — |
-| Context | rich_text | — |
-| Artifacts | rich_text | — |
-| Repository | url | — |
-| Due Date | date | — |
-| Tags | multi_select | — |
-| Assignees | people | — |
-| Branch | rich_text | Git branch name. Set when using git worktree with Executor=claude-code |
-
-Note the returned data source ID as `TASKS_DS_ID`.
-
-#### Teams Database
-
-Create with: Name (title), Members (people)
-
-Note the returned data source ID as `TEAMS_DS_ID`.
-
-#### Projects Database
-
-Create with: Name (title), Owner (people), Status (select: Active/On Hold/Completed/Archived), Due Date (date)
-
-Note the returned data source IDs as `PROJECTS_DS_ID`.
-
-### Step 4b: Add relations one at a time
-
-**Each `notion-update-data-source` call must contain exactly ONE `ADD COLUMN` statement.** Multiple statements in one call will fail with a 500 error.
-
-Add the following relations in separate calls:
-
-1. Tasks ← `Blocked By` → Tasks (self): `ADD COLUMN "Blocked By" RELATION('<TASKS_DS_ID>')`
-2. Tasks ← `Parent Task` → Tasks (self): `ADD COLUMN "Parent Task" RELATION('<TASKS_DS_ID>')`
-3. Tasks ← `Project` → Projects (dual, syncs Tasks on Projects): `ADD COLUMN "Project" RELATION('<PROJECTS_DS_ID>', DUAL 'Tasks' 'tasks')`
-4. Tasks ← `Team` → Teams (dual, syncs Tasks on Teams): `ADD COLUMN "Team" RELATION('<TEAMS_DS_ID>', DUAL 'Tasks' 'tasks')`
-5. Projects ← `Team` → Teams: `ADD COLUMN "Team" RELATION('<TEAMS_DS_ID>')`
-
-Steps 3 and 4 automatically create the synced `Tasks` property on Projects/Teams respectively, so no separate calls are needed for those.
-
-## Step 5: Create Config Page
-
-Create a page using `notion-create-pages` under `PARENT_PAGE_ID`:
-- Title: "Headless Tasks Config"
-- Body: a code block (language: `json`) containing:
-
+**Notion:**
 ```json
-{
-  "tasksDatabaseId": "<TASKS_DB_ID>",
-  "teamsDatabaseId": "<TEAMS_DB_ID>",
-  "projectsDatabaseId": "<PROJECTS_DB_ID>"
+"notion": {
+  "type": "http",
+  "url": "https://mcp.notion.com/mcp"
 }
 ```
 
-Replace the placeholders with the actual IDs from Step 4.
+After adding, authenticate by visiting `https://mcp.notion.com/mcp` in a browser and following the OAuth flow. Then restart Claude Code and run the setup skill again.
 
-After the JSON block, append the following as plain text:
+### Cowork — MCP Setup Instructions
+
+**Notion:**
+Open Cowork settings → MCP Servers → Add Server → Enter `https://mcp.notion.com/mcp`.
+Authenticate with your Notion account when prompted. Then run the setup skill again.
+
+## Step 3: Run Provider-Specific Setup
+
+Once the active provider is confirmed, load and follow:
 
 ```
-## Schema Contract
-- Core fields: Do not rename or delete (skills depend on them)
-- Extended fields: May be renamed or deleted (some features will stop working)
-- User-defined fields: Fully customizable (add Sprint, Epic, Story Points, etc. as needed)
+${CLAUDE_PLUGIN_ROOT}/skills/providers/{active_provider}/setup.md
 ```
 
-## Step 6: Verify
-
-Use `AskUserQuestion` to confirm:
-> "Setup complete! I've created the Headless Tasks workspace in Notion with Tasks, Teams, and Projects databases, and a Config page storing the database IDs. Would you like me to create a test task to verify everything is working?"
-
-If yes, create a test task using `notion-create-pages` with the Tasks database as parent:
-- Title: "Test task — delete me"
-- properties: `{"Status": "Ready", "Priority": "Medium"}`
-
-Tell the user setup is complete and they can start using:
-- Natural language task management (`task-manage` skill)
-- Visual views (`task-view` skill)
+This file contains all provider-specific database creation, schema initialization, and verification steps.
 
 ## Language
 

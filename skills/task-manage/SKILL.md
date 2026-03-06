@@ -8,86 +8,11 @@ description: >
 
 # Headless Tasks — Task Management
 
-You are managing tasks stored in a Notion database. Use the Notion MCP tools for all data operations.
+You are managing tasks in the configured data source. Use the provider-specific tools for all data operations.
 
-## Database Configuration
+## Provider Detection (once per session)
 
-At the start of each session, read the config page to get database IDs:
-
-1. Use `notion-search` with query "Headless Tasks Config" to find the config page
-2. Retrieve the page body using `notion-fetch` with the page URL/ID
-3. Parse the JSON code block to extract:
-   - `tasksDatabaseId`
-   - `teamsDatabaseId`
-   - `projectsDatabaseId`
-
-Use these IDs for all subsequent Notion operations.
-
-## Schema Validation
-
-After loading config, verify Core fields by calling `notion-fetch` with `tasksDatabaseId` and inspecting the returned schema's `properties` object.
-
-Required Core fields: `Title`, `Description`, `Acceptance Criteria`, `Status`, `Blocked By`, `Priority`, `Executor`, `Requires Review`, `Execution Plan`, `Working Directory`, `Session Reference`, `Dispatched At`, `Agent Output`, `Error Message`.
-
-### Auto-Repair (Missing Fields)
-
-If any Core field is missing, automatically repair using `notion-update-data-source`.
-First obtain the data source ID via `notion-fetch` on the database URL.
-Then run the appropriate DDL (one `ADD COLUMN` per call):
-
-| Missing Field | Repair DDL |
-|---|---|
-| Status | `ADD COLUMN "Status" SELECT('Backlog':gray, 'Ready':blue, 'In Progress':yellow, 'In Review':orange, 'Done':green, 'Blocked':red)` |
-| Priority | `ADD COLUMN "Priority" SELECT('Urgent':red, 'High':orange, 'Medium':yellow, 'Low':blue)` |
-| Executor | `ADD COLUMN "Executor" SELECT('claude-code':purple, 'cowork':green, 'human':gray)` |
-| Dispatched At / Due Date | `ADD COLUMN "<field>" DATE` |
-| (other text fields) | `ADD COLUMN "<field>" RICH_TEXT` |
-
-After repair, re-verify and continue. **Never ask the user to manually fix the schema.**
-
-## Notion MCP Tool Reference
-
-- `notion-create-pages` — Create a task (parent: `{ "data_source_id": TASKS_DS_ID }`)
-- `notion-update-page` — Update task properties
-- `notion-fetch` — Get a database, data source, or single task by URL/ID
-- `notion-search` — Full-text search across tasks; use for filtering by field value
-- `notion-get-comments` / `notion-create-comment` — Read/write task comments
-
-## Schema: Property Name → Notion Type
-
-### Core Fields (required — verify existence at session start)
-
-| Property | Type | Notes |
-|---|---|---|
-| Title | title | Task name |
-| Description | rich_text | Orchestrator-written detail |
-| Acceptance Criteria | rich_text | Verifiable completion conditions |
-| Status | select | Backlog / Ready / In Progress / In Review / Done / Blocked |
-| Blocked By | relation | Self-relation (dependency). Empty = actionable |
-| Priority | select | Urgent / High / Medium / Low |
-| Executor | select | claude-code / cowork / human |
-| Requires Review | checkbox | On → must pass In Review. Off → can go directly to Done |
-| Execution Plan | rich_text | Orchestrator's plan written before dispatch. write-once |
-| Working Directory | rich_text | claude-code: absolute path. cowork: workspace-relative path |
-| Session Reference | rich_text | Written after dispatch: tmux session name / Cowork task ID |
-| Dispatched At | date | Dispatch timestamp. Used for timeout detection |
-| Agent Output | rich_text | Execution result |
-| Error Message | rich_text | Written on failure only. Query with "Error Message is not empty" |
-
-### Extended Fields (optional — graceful degradation if absent)
-
-| Property | Type | Notes |
-|---|---|---|
-| Context | rich_text | Background info, constraints |
-| Artifacts | rich_text | PR URLs, file paths (newline-separated) |
-| Repository | url | GitHub repository URL |
-| Due Date | date | ISO format |
-| Tags | multi_select | Free tags |
-| Parent Task | relation | Self-relation (hierarchy) |
-| Project | relation | → Projects DB |
-| Team | relation | → Teams DB |
-| Assignees | people | Human executor assignment |
-| Branch | rich_text | Git branch name (e.g. feature/task-slug). Leave blank to work on the current branch |
+Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` and follow its instructions to determine `active_provider`. Skip if already determined in this conversation.
 
 ## State Transition Rules
 
@@ -108,11 +33,11 @@ Valid transitions:
 
 When the user asks "what should I do next?" or "next task":
 
-1. Use `notion-search` to find tasks where Status = "Ready"
-   (Filter Blocked By = empty in post-processing, or use `notion-fetch` on the data source)
-2. Sort by Priority: Urgent > High > Medium > Low
-3. Within same priority, sort by Due Date (earliest first)
-4. Present the top task with its full context
+1. Query tasks where Status = "Ready" using the active provider's query tools
+2. Filter out tasks where `Blocked By` is not empty (unresolved dependencies)
+3. Sort by Priority: Urgent > High > Medium > Low
+4. Within same priority, sort by Due Date (earliest first)
+5. Present the top task with its full context
 
 ## Task Creation Best Practices
 
@@ -156,29 +81,13 @@ For tasks with Executor=claude-code where the target is a git repository:
 ## Bulk Operations
 
 For requests like "show me all blocked tasks" or "mark all Done tasks as archived":
-1. Use `notion-search` or `notion-fetch` on the data source with appropriate filters
+1. Query tasks using the active provider's query tools with appropriate filters
 2. Present results to user for confirmation
-3. Execute updates in sequence using `notion-update-page`
+3. Execute updates in sequence using the provider's update tools
 
 ## After Any Task Operation
 
-After creating, updating, or deleting tasks, push fresh data to the view server:
-
-1. Retrieve all tasks via `notion-fetch` on the tasks data source URL
-2. Format the response as a `TasksResponse` JSON object:
-   ```json
-   { "tasks": [...], "updatedAt": "<ISO timestamp>" }
-   ```
-3. POST to `http://localhost:3456/api/data` with `Content-Type: application/json`
-
-Use the Bash tool:
-```bash
-curl -s -X POST http://localhost:3456/api/data \
-  -H "Content-Type: application/json" \
-  -d '<json>' -o /dev/null 2>/dev/null || true
-```
-
-Silently skip if the server is not running (the `|| true` handles this).
+After creating, updating, or deleting tasks, push fresh data to the view server as described in the active provider's SKILL.md (Pushing Data to View Server section).
 
 ## Language
 

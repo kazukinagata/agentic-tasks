@@ -12,28 +12,19 @@ user-invocable: true
 
 You orchestrate the autonomous execution of tasks by AI agents.
 
-## Database Configuration
+## Provider Detection (once per session)
 
-At the start of each session, read the config page to get database IDs:
-
-1. Use `search` with query "Headless Tasks Config" to find the config page
-2. Retrieve the page body using `retrieve-a-page` (or `retrieve-block-children` for the content)
-3. Parse the JSON code block to extract:
-   - `tasksDatabaseId`
-   - `teamsDatabaseId`
-   - `projectsDatabaseId`
+Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` and follow its instructions to determine `active_provider`. Skip if already determined in this conversation.
 
 ## Schema Validation
 
-After loading config, verify Core fields exist in the Tasks DB (same check as task-manage).
+After loading the provider SKILL.md and config, verify Core fields exist in the Tasks data source (same check as task-manage). Required Core fields: `Title`, `Description`, `Acceptance Criteria`, `Status`, `Blocked By`, `Priority`, `Executor`, `Requires Review`, `Execution Plan`, `Working Directory`, `Session Reference`, `Dispatched At`, `Agent Output`, `Error Message`.
 
-Required Core fields: `Title`, `Description`, `Acceptance Criteria`, `Status`, `Blocked By`, `Priority`, `Executor`, `Requires Review`, `Execution Plan`, `Working Directory`, `Session Reference`, `Dispatched At`, `Agent Output`, `Error Message`.
-
-If any Core field is missing, stop and report which field is absent.
+If any Core field is missing, follow the active provider SKILL.md's instructions for handling missing fields (auto-repair or stop, as defined per provider).
 
 ## Execution Flow
 
-1. **Fetch actionable tasks**: Query Notion for tasks where:
+1. **Fetch actionable tasks**: Query for tasks where:
    - Status = "Ready"
    - Blocked By is empty (no unresolved dependencies)
    - Executor = "claude-code" (or specified executor)
@@ -71,7 +62,8 @@ Do not write `Dispatched At` or `Session Reference`.
 
 ## Dispatch Prompt Template
 
-When dispatching to claude-code, cowork, or antigravity, assemble the prompt as follows:
+When dispatching to claude-code, cowork, or antigravity, assemble the prompt as follows.
+Replace `<On Completion>` with the provider-specific update instruction from the active provider's SKILL.md (Task Record Reference section).
 
 ```
 # <Title>
@@ -93,10 +85,9 @@ When dispatching to claude-code, cowork, or antigravity, assemble the prompt as 
 - Working Directory: <Working Directory>
 
 ## On Completion
-Update Notion page <Page ID> with results in Agent Output field and set Status to "In Review" (or "Done" if Requires Review is unchecked).
+<On Completion: provider-specific instruction to write results to Agent Output and update Status>
 ```
 
-- `<Page ID>` = the Notion page ID returned when the task was created (from `id` field)
 - Omit sections whose source field is empty
 - `Execution Plan` is written by the Orchestrator before dispatch; do not modify it
 

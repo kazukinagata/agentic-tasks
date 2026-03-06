@@ -11,6 +11,10 @@ description: >
 
 You manage the local view server that renders task data as interactive HTML pages.
 
+## Provider Detection (once per session)
+
+Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` and follow its instructions to determine `active_provider`. Skip if already determined in this conversation.
+
 ## Starting the Server
 
 The view server runs at `http://localhost:3456`. To start it:
@@ -56,18 +60,11 @@ Detect the platform and use the appropriate command.
 
 ## Initializing Data After Start
 
-After starting the server, push current task data so the view is populated:
-
-1. Use `search` with query "Headless Tasks Config" to find the config page
-2. Retrieve the page body and parse the JSON to get `tasksDatabaseId`
-3. Query all tasks via `query-data-source` on `tasksDatabaseId`
-4. POST to `http://localhost:3456/api/data`:
-
-```bash
-curl -s -X POST http://localhost:3456/api/data \
-  -H "Content-Type: application/json" \
-  -d '<json>' -o /dev/null 2>/dev/null || true
-```
+After starting the server, push current task data so the view is populated.
+Follow the **Pushing Data to View Server** section in the active provider's SKILL.md to:
+1. Fetch all tasks from the data source
+2. Format as `{ "tasks": [...], "updatedAt": "<ISO timestamp>" }`
+3. POST to `http://localhost:3456/api/data`
 
 ## View Features
 
