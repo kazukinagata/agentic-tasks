@@ -72,7 +72,9 @@ For each task where `Executor = human`:
 If the user invoked with `--auto` flag or said "自動実行":
 - After displaying tasks, without further confirmation, execute the task-agent flow for all
   `Ready` tasks where `Executor = claude-code` (up to `maxConcurrentAgents` limit).
-- Follow the Execution Flow defined in `${CLAUDE_PLUGIN_ROOT}/skills/task-agent/SKILL.md`.
+- 同時実行数を確認し、ランチャーファイルを生成し、Notion でクレームし、タスクごとに
+  tmux ペインを起動する並列ディスパッチを実行する。詳細は `/task-agent` を参照するか、
+  直接 `/task-agent --auto` を実行してください。
 
 ## Language
 
