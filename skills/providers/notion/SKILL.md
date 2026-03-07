@@ -112,3 +112,41 @@ curl -s -X POST http://localhost:3456/api/data \
 ```
 
 Silently skip if the server is not running (the `|| true` handles this).
+
+---
+
+## Identity: Resolve Current User
+
+Called by `identity-resolve` shared skill when `active_provider = notion`.
+
+1. Call `notion-get-users` with `user_id: "self"`.
+2. Map the response:
+   - `id` ← `response.id`
+   - `name` ← `response.name`
+   - `email` ← `response.person.email` (null if Bot user)
+3. Save to session variable `current_user: { id, name, email }`.
+4. **Fallback**: If `notion-get-users` is unavailable or fails, read the Config Page and use the `selfUserId` field:
+   - `id` ← `selfUserId` from config JSON
+   - `name` ← `$USER` environment variable or "local"
+   - `email` ← null
+
+## Identity: List Org Members
+
+Called by `identity-resolve` shared skill when `org_members` lookup is needed.
+
+1. Call `notion-get-users` with no arguments to list all workspace members.
+2. Map each user to `OrgMember { id, name, email }`:
+   - `id` ← `user.id`
+   - `name` ← `user.name`
+   - `email` ← `user.person.email` (null for Bot users)
+3. Save to session variable `org_members: OrgMember[]`.
+4. **Fallback**: If `notion-get-users` is unavailable, set `org_members: []` and return.
+   The `member-lookup` skill will then fall back to TeamsDB Members field.
+
+## Identity: Self-Task Detection
+
+To determine whether a task is assigned to the current user:
+
+- Fetch the task's `Assignees` property (people type — returns an array of person objects).
+- Check if any element in the array has `id === current_user.id`.
+- Use this check when filtering tasks in `task-my-tasks` and `task-agent`.

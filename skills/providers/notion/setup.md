@@ -109,11 +109,14 @@ Create a page using `notion-create-pages` under `PARENT_PAGE_ID`:
 {
   "tasksDatabaseId": "<TASKS_DB_ID>",
   "teamsDatabaseId": "<TEAMS_DB_ID>",
-  "projectsDatabaseId": "<PROJECTS_DB_ID>"
+  "projectsDatabaseId": "<PROJECTS_DB_ID>",
+  "selfUserId": "<NOTION_USER_UUID>"
 }
 ```
 
 Replace the placeholders with the actual IDs from Step 4.
+For `selfUserId`: call `notion-get-users` with `user_id: "self"` and use the returned `id` value.
+This allows `identity-resolve` to work without an API call on subsequent sessions.
 
 After the JSON block, append the following as plain text:
 

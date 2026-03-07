@@ -107,6 +107,33 @@ When the user asks "what should I do next?" or "next task":
 
 ## Task Creation Best Practices
 
+### Assignees and Identity Resolution
+
+**Assignees は常に1人**（スキルレベルのルール）。複数人が必要な場合はタスクを分割することを提案する。
+
+**自分のタスクの場合:**
+- ユーザーが「自分の」「my」と明示した場合:
+  1. Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` → `active_provider`.
+  2. Load `${CLAUDE_PLUGIN_ROOT}/skills/identity-resolve/SKILL.md` → `current_user`.
+  3. `Assignees` に `current_user` を自動セット（確認不要）。
+
+**他メンバーへの割り当ての場合:**
+- ユーザーが他のメンバー名を指定した場合:
+  1. Load `${CLAUDE_PLUGIN_ROOT}/skills/identity-resolve/SKILL.md` → `org_members` も取得。
+  2. Load `${CLAUDE_PLUGIN_ROOT}/skills/member-lookup/SKILL.md` でメンバーIDを解決。
+  3. 候補が複数の場合は AskUserQuestion で確認。
+  4. メンバーが見つからない場合のみ AskUserQuestion でメンバーを聞く。
+  5. 以下のフィールドを強制適用（他人担当時の制約）:
+
+| フィールド | 値 | 理由 |
+|---|---|---|
+| `Executor` | `human` 固定 | 担当者が自分で判断する |
+| `Working Directory` | 空欄 | 他人のFS情報は不明 |
+| `Branch` | 空欄 | 他人のgit環境は不明 |
+| `Session Reference` | 空欄 | 担当者のAgentが記録する |
+| `Dispatched At` | 空欄 | 担当者のAgentが記録する |
+| `Requires Review` | unchecked | 担当者が判断する |
+
 ### Required Confirmations (no guessing or omitting)
 
 Always confirm the following fields with AskUserQuestion unless the user has explicitly stated them.

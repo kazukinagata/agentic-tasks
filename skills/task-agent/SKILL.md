@@ -12,9 +12,10 @@ user-invocable: true
 
 You orchestrate the autonomous execution of tasks by AI agents.
 
-## Provider Detection (once per session)
+## Provider Detection + Identity Resolve (once per session)
 
-Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` and follow its instructions to determine `active_provider`. Skip if already determined in this conversation.
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` and determine `active_provider`. Skip if already set.
+2. Load `${CLAUDE_PLUGIN_ROOT}/skills/identity-resolve/SKILL.md` and resolve `current_user`. Skip if already set.
 
 ## Schema Validation
 
@@ -28,6 +29,7 @@ If any Core field is missing, follow the active provider SKILL.md's instructions
    - Status = "Ready"
    - Blocked By is empty (no unresolved dependencies)
    - Executor = "claude-code" (or specified executor)
+   - Assignees contains `current_user.id` OR Assignees is empty (backward compatibility)
 2. **Sort by priority**: Urgent > High > Medium > Low, then by Due Date
 3. **For each task**:
    a. Read all Core fields and Extended fields (Context, Repository)
