@@ -3,11 +3,13 @@ import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { EventBus } from "./sse.js";
-import type { TasksResponse } from "./types.js";
+import type { TasksResponse, SprintsResponse } from "./types.js";
 
 const eventBus = new EventBus();
+const sprintEventBus = new EventBus();
 let sseId = 0;
 let cachedData: TasksResponse | null = null;
+let cachedSprintData: SprintsResponse | null = null;
 
 const app = new Hono();
 
@@ -28,6 +30,20 @@ app.post("/api/data", async (c) => {
   const data = await c.req.json<TasksResponse>();
   cachedData = data;
   eventBus.emit(JSON.stringify(data));
+  return c.json({ status: "ok" });
+});
+
+app.get("/api/sprint", (c) => {
+  if (!cachedSprintData) {
+    return c.json({ sprints: [], currentSprintId: null, updatedAt: new Date().toISOString() });
+  }
+  return c.json(cachedSprintData);
+});
+
+app.post("/api/sprint-data", async (c) => {
+  const data = await c.req.json<SprintsResponse>();
+  cachedSprintData = data;
+  sprintEventBus.emit(JSON.stringify(data));
   return c.json({ status: "ok" });
 });
 

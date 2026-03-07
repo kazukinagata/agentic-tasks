@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sprint Backlog</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1117; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; display: flex; flex-direction: column; }
+    header { background: #1a1f2e; border-bottom: 1px solid #2d3748; padding: 14px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex-shrink: 0; }
+    header h1 { font-size: 18px; font-weight: 600; color: #a78bfa; flex: 1; }
+    .filter-bar { display: flex; gap: 10px; align-items: center; }
+    select, input { background: #2d3748; border: 1px solid #4a5568; color: #e2e8f0; padding: 5px 10px; border-radius: 6px; font-size: 13px; outline: none; }
+    select:focus, input:focus { border-color: #7c3aed; }
+    .sprint-info { background: #141720; border-bottom: 1px solid #2d3748; padding: 12px 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; flex-shrink: 0; }
+    .sprint-goal { font-size: 13px; color: #a0aec0; flex: 1; }
+    .sprint-goal strong { color: #e2e8f0; }
+    .progress-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .progress-bar-bg { width: 180px; height: 8px; background: #2d3748; border-radius: 4px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: #68d391; border-radius: 4px; transition: width 0.4s; }
+    .progress-label { font-size: 12px; color: #718096; }
+    .agents-badge { font-size: 12px; color: #a78bfa; background: #1e1b4b; padding: 3px 10px; border-radius: 10px; border: 1px solid #4c1d95; }
+    .status-bar { padding: 6px 20px; font-size: 12px; color: #718096; background: #141720; border-bottom: 1px solid #2d3748; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .sse-dot { width: 8px; height: 8px; border-radius: 50%; background: #48bb78; display: inline-block; }
+    .sse-dot.disconnected { background: #fc8181; }
+    .board { display: flex; gap: 12px; padding: 16px 20px; overflow-x: auto; flex: 1; align-items: flex-start; }
+    .column { background: #141720; border: 1px solid #2d3748; border-radius: 10px; width: 240px; min-width: 240px; display: flex; flex-direction: column; max-height: calc(100vh - 185px); }
+    .col-header { padding: 10px 14px; font-size: 13px; font-weight: 600; border-bottom: 1px solid #2d3748; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #141720; border-radius: 10px 10px 0 0; flex-shrink: 0; }
+    .col-count { background: #2d3748; color: #a0aec0; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+    .col-backlog  .col-header { color: #a0aec0; }
+    .col-ready    .col-header { color: #63b3ed; }
+    .col-progress .col-header { color: #f6ad55; }
+    .col-review   .col-header { color: #b794f4; }
+    .col-done     .col-header { color: #68d391; }
+    .col-blocked  .col-header { color: #fc8181; }
+    .col-backlog  { border-top: 3px solid #4a5568; }
+    .col-ready    { border-top: 3px solid #3182ce; }
+    .col-progress { border-top: 3px solid #dd6b20; }
+    .col-review   { border-top: 3px solid #6b46c1; }
+    .col-done     { border-top: 3px solid #276749; }
+    .col-blocked  { border-top: 3px solid #c53030; }
+    .cards { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; }
+    .card { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 8px; padding: 10px; cursor: pointer; transition: border-color 0.15s, transform 0.1s; position: relative; overflow: hidden; }
+    .card:hover { border-color: #4a5568; transform: translateY(-1px); }
+    .card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+    .card.p-urgent::before { background: #fc8181; }
+    .card.p-high::before   { background: #f6ad55; }
+    .card.p-medium::before { background: #63b3ed; }
+    .card.p-low::before    { background: #4a5568; }
+    .card.stalled { border-color: #744210; background: #1c1a10; }
+    .card.stalled::after { content: 'STALLED'; position: absolute; top: 6px; right: 8px; font-size: 9px; font-weight: 700; color: #f6ad55; background: #3d2a00; padding: 1px 6px; border-radius: 8px; letter-spacing: 0.06em; }
+    .card-title { font-size: 13px; font-weight: 500; line-height: 1.4; color: #e2e8f0; padding-left: 6px; word-break: break-word; }
+    .card-meta { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center; padding-left: 6px; }
+    .badge { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .p-urgent { color: #fc8181; background: #3d1515; }
+    .p-high   { color: #f6ad55; background: #3d2415; }
+    .p-medium { color: #63b3ed; background: #1a2d4a; }
+    .p-low    { color: #a0aec0; background: #2d3748; }
+    .score-badge { color: #a78bfa; background: #1e1b4b; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .session-ref { font-size: 10px; color: #4a9ec9; background: #0d2233; padding: 1px 6px; border-radius: 4px; font-family: monospace; }
+    .empty-col { color: #4a5568; font-size: 12px; text-align: center; padding: 20px 10px; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #2d3748; color: #e2e8f0; padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; border: 1px solid #4a5568; }
+    .toast.show { opacity: 1; }
+    .no-sprint { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: #4a5568; text-align: center; gap: 12px; }
+    .no-sprint h2 { color: #718096; font-size: 20px; }
+    .no-sprint p { font-size: 14px; }
+    .no-sprint code { background: #1a1f2e; border: 1px solid #2d3748; padding: 4px 10px; border-radius: 6px; color: #a78bfa; font-size: 13px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Sprint Backlog</h1>
+  <div class="filter-bar">
+    <input type="text" id="search" placeholder="Search..." style="width:140px">
+    <select id="filter-executor">
+      <option value="">All Executors</option>
+      <option>claude-code</option><option>cowork</option><option>human</option>
+    </select>
+    <select id="filter-priority">
+      <option value="">All Priority</option>
+      <option>Urgent</option><option>High</option><option>Medium</option><option>Low</option>
+    </select>
+    <a href="/selector.html" style="color:#a78bfa;text-decoration:none;font-size:13px">← Views</a>
+  </div>
+</header>
+<div class="sprint-info" id="sprint-info" style="display:none">
+  <div class="sprint-goal"><strong id="sprint-name"></strong> — <span id="sprint-goal"></span></div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+    <span class="progress-label" id="progress-label">0 / 0 pts</span>
+  </div>
+  <div class="agents-badge" id="agents-badge"></div>
+</div>
+<div class="status-bar">
+  <span class="sse-dot disconnected" id="sse-dot"></span>
+  <span id="sse-status">Connecting...</span>
+  <span id="task-count"></span>
+</div>
+<div class="board" id="board">
+  <div class="column col-backlog"><div class="col-header">Backlog <span class="col-count" id="cnt-backlog">0</span></div><div class="cards" id="col-backlog"></div></div>
+  <div class="column col-ready"><div class="col-header">Ready <span class="col-count" id="cnt-ready">0</span></div><div class="cards" id="col-ready"></div></div>
+  <div class="column col-progress"><div class="col-header">In Progress <span class="col-count" id="cnt-progress">0</span></div><div class="cards" id="col-progress"></div></div>
+  <div class="column col-review"><div class="col-header">In Review <span class="col-count" id="cnt-review">0</span></div><div class="cards" id="col-review"></div></div>
+  <div class="column col-blocked"><div class="col-header">Blocked <span class="col-count" id="cnt-blocked">0</span></div><div class="cards" id="col-blocked"></div></div>
+  <div class="column col-done"><div class="col-header">Done <span class="col-count" id="cnt-done">0</span></div><div class="cards" id="col-done"></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  let allTasks = [];
+  let currentSprint = null;
+  const now = () => new Date();
+
+  const colMap = {
+    'Backlog':'backlog', 'Ready':'ready', 'In Progress':'progress',
+    'In Review':'review', 'Done':'done', 'Blocked':'blocked'
+  };
+  const prioClass = { Urgent:'p-urgent', High:'p-high', Medium:'p-medium', Low:'p-low' };
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function hoursAgo(isoDate) {
+    if (!isoDate) return null;
+    return Math.round((now() - new Date(isoDate)) / 3600000);
+  }
+
+  function isStalled(task) {
+    if (task.status !== 'In Progress' || !task.dispatchedAt) return false;
+    const score = task.complexityScore || 6;
+    const threshold = score * 4;
+    const elapsed = hoursAgo(task.dispatchedAt);
+    return elapsed !== null && elapsed > threshold;
+  }
+
+  function render() {
+    const search = document.getElementById('search').value.toLowerCase();
+    const executor = document.getElementById('filter-executor').value;
+    const priority = document.getElementById('filter-priority').value;
+
+    const sprintTasks = allTasks.filter(t => currentSprint ? t.sprintId === currentSprint.id : false);
+    const filtered = sprintTasks.filter(t =>
+      (!search || t.title.toLowerCase().includes(search)) &&
+      (!executor || t.executor === executor) &&
+      (!priority || t.priority === priority)
+    );
+
+    // Progress bar
+    const totalScore = sprintTasks.reduce((s, t) => s + (t.complexityScore || 0), 0);
+    const doneScore = sprintTasks.filter(t => t.status === 'Done').reduce((s, t) => s + (t.complexityScore || 0), 0);
+    const pct = totalScore > 0 ? Math.round(doneScore / totalScore * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-label').textContent = `${doneScore} / ${totalScore} pts (${pct}%)`;
+
+    // Running agents
+    const running = sprintTasks.filter(t => t.status === 'In Progress').length;
+    const maxAgents = currentSprint ? (currentSprint.maxConcurrentAgents || '?') : '?';
+    document.getElementById('agents-badge').textContent = `Agents: ${running} / ${maxAgents}`;
+
+    const grouped = { backlog:[], ready:[], progress:[], review:[], blocked:[], done:[] };
+    filtered.forEach(t => {
+      const col = colMap[t.status] || 'backlog';
+      grouped[col].push(t);
+    });
+
+    Object.entries(grouped).forEach(([col, tasks]) => {
+      const el = document.getElementById('col-' + col);
+      const cnt = document.getElementById('cnt-' + col);
+      cnt.textContent = tasks.length;
+      if (tasks.length === 0) {
+        el.innerHTML = '<div class="empty-col">No tasks</div>';
+        return;
+      }
+      el.innerHTML = tasks.map(t => {
+        const pc = t.priority ? prioClass[t.priority] : '';
+        const stalled = isStalled(t);
+        const elapsed = t.dispatchedAt ? hoursAgo(t.dispatchedAt) : null;
+        return `<div class="card ${pc}${stalled?' stalled':''}" onclick="copyId('${t.id}')" title="${esc(t.url || t.id)}">
+          <div class="card-title">${esc(t.title)}</div>
+          <div class="card-meta">
+            ${t.priority ? `<span class="badge ${pc}">${esc(t.priority)}</span>` : ''}
+            ${t.complexityScore != null ? `<span class="score-badge">S:${t.complexityScore}</span>` : ''}
+            ${t.sessionReference ? `<span class="session-ref">${esc(t.sessionReference)}</span>` : ''}
+            ${elapsed !== null ? `<span style="font-size:10px;color:${stalled?'#f6ad55':'#718096'}">${elapsed}h</span>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    });
+
+    document.getElementById('task-count').textContent = `${filtered.length} sprint tasks`;
+  }
+
+  function showNoSprint() {
+    document.getElementById('sprint-info').style.display = 'none';
+    document.getElementById('board').innerHTML = `
+      <div class="no-sprint">
+        <h2>No Active Sprint</h2>
+        <p>Start a sprint to see tasks here.</p>
+        <code>start sprint</code>
+      </div>`;
+  }
+
+  function copyId(id) {
+    navigator.clipboard.writeText(id).catch(()=>{});
+    showToast('ID copied: ' + id.slice(0,8) + '...');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  async function fetchAll() {
+    try {
+      const [tasksRes, sprintRes] = await Promise.all([
+        fetch('/api/tasks'),
+        fetch('/api/sprint')
+      ]);
+      const tasksData = await tasksRes.json();
+      const sprintData = await sprintRes.json();
+      allTasks = tasksData.tasks || [];
+      const sprints = sprintData.sprints || [];
+      currentSprint = sprints.find(s => s.status === 'Active') || null;
+      if (currentSprint) {
+        document.getElementById('sprint-info').style.display = 'flex';
+        document.getElementById('sprint-name').textContent = currentSprint.name;
+        document.getElementById('sprint-goal').textContent = currentSprint.goal;
+        render();
+      } else {
+        showNoSprint();
+      }
+    } catch(e) {
+      document.getElementById('sse-status').textContent = 'Error: ' + e.message;
+    }
+  }
+
+  ['search','filter-executor','filter-priority'].forEach(id =>
+    document.getElementById(id).addEventListener('input', render)
+  );
+
+  function connectSSE() {
+    const dot = document.getElementById('sse-dot');
+    const status = document.getElementById('sse-status');
+    const es = new EventSource('/api/events');
+    es.addEventListener('connected', () => {
+      dot.classList.remove('disconnected');
+      status.textContent = 'Live';
+    });
+    es.addEventListener('refresh', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        allTasks = data.tasks || [];
+        if (currentSprint) render();
+      } catch(err) { fetchAll(); }
+    });
+    es.onerror = () => {
+      dot.classList.add('disconnected');
+      status.textContent = 'Reconnecting...';
+      es.close();
+      setTimeout(connectSSE, 3000);
+    };
+  }
+
+  fetchAll();
+  connectSSE();
+</script>
+</body>
+</html>
