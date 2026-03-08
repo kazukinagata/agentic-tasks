@@ -23,6 +23,7 @@ PANE_ID="$TMUX_PANE"
 SDIR="<session-dir>"
 IDX="<i>"
 PERMISSION_MODE="<selected-permission-mode>"
+unset CLAUDECODE
 
 # Crash fallback
 trap 'tmux select-pane -t "$PANE_ID" -T "CRASHED: $TASK_TITLE"; \
@@ -46,8 +47,10 @@ cd "<working-directory>"
 
 # Execute task (Interactive mode: TUI is displayed in real time)
 PROMPT=$(cat "$SDIR/task-$IDX.md")
-claude --permission-mode "$PERMISSION_MODE" "$PROMPT" 2>&1 | tee "$SDIR/task-$IDX.log"
-EXIT_CODE=${PIPESTATUS[0]}
+tmux pipe-pane -t "$PANE_ID" -o "cat >> $SDIR/task-$IDX.log"
+
+claude --permission-mode "$PERMISSION_MODE" "$PROMPT"
+EXIT_CODE=$?
 
 if [ $EXIT_CODE -ne 0 ]; then
   tmux select-pane -t "$PANE_ID" -T "ERROR($EXIT_CODE): $TASK_TITLE"
@@ -81,6 +84,15 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/scripts/launch-tmux.sh "$SDIR" "$SESSION" "$N"
 ```
 
 If the script exits with code 1 (tmux not installed), fall back to sequential Agent tool execution.
+
+After pane creation, if running outside tmux, try to auto-open a terminal window:
+
+```bash
+# tmux 外の場合のみ自動ターミナル起動を試行
+if [ -z "${TMUX:-}" ]; then
+  bash ${CLAUDE_PLUGIN_ROOT}/skills/scripts/open-terminal.sh "$SESSION" || true
+fi
+```
 
 After each pane is created successfully, set pane titles and write Session Reference to Notion:
 - Inside tmux: `tmux select-pane -t "$CURRENT:$SESSION:0.$i" -T "<task-i-title>"`
