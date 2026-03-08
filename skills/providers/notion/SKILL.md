@@ -117,7 +117,7 @@ Silently skip if the server is not running (the `|| true` handles this).
 
 ## Identity: Resolve Current User
 
-Called by `identity-resolve` shared skill when `active_provider = notion`.
+Called by `resolving-identity` shared skill when `active_provider = notion`.
 
 1. Call `notion-get-users` with `user_id: "self"`.
 2. Map the response:
@@ -132,7 +132,7 @@ Called by `identity-resolve` shared skill when `active_provider = notion`.
 
 ## Identity: List Org Members
 
-Called by `identity-resolve` shared skill when `org_members` lookup is needed.
+Called by `resolving-identity` shared skill when `org_members` lookup is needed.
 
 1. Call `notion-get-users` with no arguments to list all workspace members.
 2. Map each user to `OrgMember { id, name, email }`:
@@ -141,7 +141,7 @@ Called by `identity-resolve` shared skill when `org_members` lookup is needed.
    - `email` ← `user.person.email` (null for Bot users)
 3. Save to session variable `org_members: OrgMember[]`.
 4. **Fallback**: If `notion-get-users` is unavailable, set `org_members: []` and return.
-   The `member-lookup` skill will then fall back to TeamsDB Members field.
+   The `looking-up-members` skill will then fall back to TeamsDB Members field.
 
 ## Identity: Self-Task Detection
 
@@ -149,4 +149,4 @@ To determine whether a task is assigned to the current user:
 
 - Fetch the task's `Assignees` property (people type — returns an array of person objects).
 - Check if any element in the array has `id === current_user.id`.
-- Use this check when filtering tasks in `task-my-tasks` and `task-agent`.
+- Use this check when filtering tasks in `viewing-my-tasks` and `executing-tasks`.

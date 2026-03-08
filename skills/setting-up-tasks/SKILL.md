@@ -1,5 +1,5 @@
 ---
-name: task-setup
+name: setting-up-tasks
 description: >
   Use when the user says "setup headless tasks", "initialize task management",
   "configure notion tasks", "configure data source", or needs to set up a data source for the headless-tasks plugin.

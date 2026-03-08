@@ -1,5 +1,5 @@
 ---
-name: scrum-setup
+name: setting-up-scrum
 description: >
   Use when the user wants to enable scrum/sprint support for headless-tasks.
   Triggers on: "set up scrum", "enable scrum", "add scrum", "set up sprints",
@@ -59,7 +59,7 @@ This creates a `Sprint` column on Tasks that points to the Sprints DB, and a bac
 ADD COLUMN "Complexity Score" NUMBER
 ```
 
-**Complexity Score calculation guide** (for use in task-manage when promoting Backlog→Ready):
+**Complexity Score calculation guide** (for use in managing-tasks when promoting Backlog→Ready):
 - Base: number of Acceptance Criteria lines × 2
 - +1 per 200 tokens in Description
 - +2 per level of Blocked By dependency chain depth

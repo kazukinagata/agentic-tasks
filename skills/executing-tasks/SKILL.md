@@ -1,5 +1,5 @@
 ---
-name: task-agent
+name: executing-tasks
 description: >
   Use when the user wants autonomous task execution. Triggers on:
   "次のタスクをやって", "do the next task", "process tasks",
@@ -8,18 +8,18 @@ description: >
 user-invocable: true
 ---
 
-# Headless Tasks — Autonomous Task Execution (tmux Parallel Mode)
+# Headless Tasks — Task Execution
 
-You orchestrate the autonomous execution of tasks by launching independent Claude Code processes in tmux panes.
+You orchestrate the execution of tasks. Tasks can be executed one at a time in the current session, or in parallel using tmux panes.
 
 ## Provider Detection + Identity Resolve (once per session)
 
-1. Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` and determine `active_provider`. Skip if already set.
-2. Load `${CLAUDE_PLUGIN_ROOT}/skills/identity-resolve/SKILL.md` and resolve `current_user`. Skip if already set.
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and determine `active_provider`. Skip if already set.
+2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` and resolve `current_user`. Skip if already set.
 
 ## Schema Validation
 
-After loading the provider SKILL.md and config, verify Core fields exist in the Tasks data source (same check as task-manage). Required Core fields: `Title`, `Description`, `Acceptance Criteria`, `Status`, `Blocked By`, `Priority`, `Executor`, `Requires Review`, `Execution Plan`, `Working Directory`, `Session Reference`, `Dispatched At`, `Agent Output`, `Error Message`.
+After loading the provider SKILL.md and config, verify Core fields exist in the Tasks data source (same check as managing-tasks). Required Core fields: `Title`, `Description`, `Acceptance Criteria`, `Status`, `Blocked By`, `Priority`, `Executor`, `Requires Review`, `Execution Plan`, `Working Directory`, `Session Reference`, `Dispatched At`, `Agent Output`, `Error Message`.
 
 If any Core field is missing, follow the active provider SKILL.md's instructions for handling missing fields (auto-repair or stop, as defined per provider).
 
@@ -31,34 +31,56 @@ If any Core field is missing, follow the active provider SKILL.md's instructions
    - Status = "Ready"
    - Blocked By is empty (no unresolved dependencies)
    - Executor = "claude-code"
-   - Assignees contains `current_user.id` OR Assignees is empty
+   - Assignees contains `current_user.id`
 2. Count In Progress tasks with the same filter conditions (Status = "In Progress")
 3. Calculate `available_slots = maxConcurrentAgents - in_progress_count` (config default: 3)
 4. If `available_slots <= 0`: report "N件が実行中（上限: M）。完了を待つか maxConcurrentAgents を増やしてください" and stop
 5. Sort by Priority (Urgent > High > Medium > Low), then Due Date ascending
 6. Take the first `min(ready_count, available_slots)` tasks
 
-### Phase 2: Validate & Confirm
+### Phase 2: Validate & Choose Execution Mode
 
 For each fetched task:
 - Verify Working Directory exists: `test -d "$WORKING_DIR"`
 - If not found: exclude that task, set Status = "Blocked", Error Message = "Working directory not found"
 
-In `--auto` mode: skip confirmation and proceed.
-
-Otherwise, display the list and ask for one-time confirmation:
+Display the task list:
 
 ```
-N件のタスクを並列実行します（tmux 分割表示）:
+実行可能なタスク:
 1. [Urgent] Feature Login   → /home/user/project-a
 2. [High]   API Tests       → /home/user/project-b  (branch: feature/api)
 3. [Medium] Fix Bug #42     → /home/user/project-c
-
-tmux セッション "headless-tasks-<timestamp>" に接続して確認できます。
-実行しますか？ [yes/no]
 ```
 
-If user answers no, stop.
+**`--auto` モード時:** tmux 並列 + plan モードで自動実行（確認スキップ）。
+
+**通常モード時:** AskUserQuestion で実行方法を選択:
+
+| 選択肢 | 説明 |
+|--------|------|
+| 1つずつ実行 (Recommended) | タスクを1つ選んで現在のセッションで実行 |
+| tmux 並列実行 | 複数タスクを tmux ペインで同時実行 |
+
+#### 「1つずつ実行」選択時
+
+1. AskUserQuestion でどのタスクを実行するか選択させる
+2. クレーム: Status → "In Progress", Dispatched At → now
+3. 現セッション内で実行:
+   - `cd <Working Directory>`
+   - Branch が設定されている場合: `git checkout <branch> || git checkout -b <branch>`
+   - タスクの Description, Acceptance Criteria, Execution Plan に基づいて作業を実行
+   - 完了時: Agent Output に結果を記録、Status を Requires Review に応じて "In Review" or "Done" に更新
+   - エラー時: Error Message にエラー詳細を記録、Status を "Blocked" に更新
+
+#### 「tmux 並列実行」選択時
+
+1. AskUserQuestion で permission mode を選択:
+   - plan (Recommended)
+   - default
+   - acceptEdits
+   - bypassPermissions
+2. Phase 3〜6 に進む（tmux 並列実行フロー）
 
 ### Phase 3: Prepare Files
 
@@ -80,6 +102,7 @@ TASK_ID="<notion-page-id>"
 PANE_ID="$TMUX_PANE"
 SDIR="<session-dir>"
 IDX="<i>"
+PERMISSION_MODE="<selected-permission-mode>"
 
 # Crash fallback
 trap 'tmux select-pane -t "$PANE_ID" -T "CRASHED: $TASK_TITLE"; \
@@ -103,7 +126,7 @@ cd "<working-directory>"
 
 # Execute task (Interactive mode: TUI is displayed in real time)
 PROMPT=$(cat "$SDIR/task-$IDX.md")
-claude --permission-mode bypassPermissions "$PROMPT" 2>&1 | tee "$SDIR/task-$IDX.log"
+claude --permission-mode "$PERMISSION_MODE" "$PROMPT" 2>&1 | tee "$SDIR/task-$IDX.log"
 EXIT_CODE=${PIPESTATUS[0]}
 
 if [ $EXIT_CODE -ne 0 ]; then
@@ -188,7 +211,7 @@ N件のタスクを並列実行中です:
   tmux attach -t headless-tasks-<ts>         （tmux 外から）
   tmux switch-client -t headless-tasks-<ts>  （tmux 内から）
 
-完了状況の確認: /task-my-tasks  または  ls /tmp/headless-tasks/headless-tasks-<ts>/
+完了状況の確認: /viewing-my-tasks  または  ls /tmp/headless-tasks/headless-tasks-<ts>/
 ```
 
 The Orchestrator exits here. Each Sub-Agent runs independently and handles its own completion.
@@ -257,9 +280,11 @@ For each task:
 
 ## Safety
 
-- Default: display all tasks and ask for one-time confirmation (skip with `--auto`)
+- Default: single task in current session
+- tmux parallel is opt-in via AskUserQuestion
+- Default permission mode for tmux agents: plan
+- Never use `--dangerously-skip-permissions`
 - Respect `maxConcurrentAgents` limit by subtracting current In Progress count
 - Order strictly: generate files → claim in Notion → launch tmux
 - Write Session Reference only after pane creation succeeds (no speculative writes)
-- Use `--permission-mode bypassPermissions` (never use `--dangerously-skip-permissions`)
 - On tmux unavailable: error message + fallback to sequential Agent tool execution

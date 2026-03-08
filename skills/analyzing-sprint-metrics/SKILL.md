@@ -1,5 +1,5 @@
 ---
-name: sprint-metrics
+name: analyzing-sprint-metrics
 description: >
   Use when the user wants sprint performance analysis or retrospective insights.
   Triggers on: "sprint metrics", "retrospective", "retro", "agent performance",

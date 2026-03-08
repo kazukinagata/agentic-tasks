@@ -1,5 +1,5 @@
 ---
-name: member-lookup
+name: looking-up-members
 description: Internal shared skill to resolve member names or email addresses to provider user IDs. Not intended for direct user invocation.
 user-invocable: false
 ---
@@ -7,12 +7,12 @@ user-invocable: false
 # Headless Tasks — Member Lookup
 
 Resolve a member name or email to a provider user ID.
-Uses the `org_members` cache populated by `identity-resolve`.
+Uses the `org_members` cache populated by `resolving-identity`.
 
 ## Prerequisites
 
 - `active_provider` must already be determined.
-- `org_members` must already be populated (caller must trigger identity-resolve Step 2 first).
+- `org_members` must already be populated (caller must trigger resolving-identity Step 2 first).
 
 ## Resolution Algorithm
 
@@ -38,7 +38,7 @@ If `org_members` is empty (provider does not support member listing), fall back 
 
 ## Caller Responsibility
 
-The caller (task-delegate, message-intake, task-manage) must:
-- Run provider-detection + identity-resolve (org_members) before calling this skill.
+The caller (delegating-tasks, ingesting-messages, managing-tasks) must:
+- Run detecting-provider + resolving-identity (org_members) before calling this skill.
 - Handle the returned candidates with AskUserQuestion if multiple matches exist.
-- Not call this skill for the current user — use `current_user.id` directly from identity-resolve.
+- Not call this skill for the current user — use `current_user.id` directly from resolving-identity.

@@ -1,5 +1,5 @@
 ---
-name: sprint-review
+name: reviewing-sprint
 description: >
   Use when the user wants to end or close a sprint and review its results.
   Triggers on: "sprint review", "batch complete", "end sprint", "close sprint",

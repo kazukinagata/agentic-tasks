@@ -1,5 +1,5 @@
 ---
-name: message-intake
+name: ingesting-messages
 description: >
   メッセージングツールの自分宛メッセージを読み込み、タスクに自動変換する。
   Cowork Scheduled Task として毎日実行。Triggers on:
@@ -18,7 +18,7 @@ user-invocable: true
 Cowork で毎朝自動実行する場合:
 1. Cowork → Scheduled Tasks → New
 2. Trigger: Daily / 09:00（ユーザーのタイムゾーン）
-3. Prompt: `message-intake スキルを実行してください`
+3. Prompt: `ingesting-messages スキルを実行してください`
 
 ---
 
@@ -26,8 +26,8 @@ Cowork で毎朝自動実行する場合:
 
 ### Provider Detection + Identity Resolve
 
-1. Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` → `active_provider`. Skip if set.
-2. Load `${CLAUDE_PLUGIN_ROOT}/skills/identity-resolve/SKILL.md`:
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` → `active_provider`. Skip if set.
+2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md`:
    - `current_user` を取得（メッセージフィルタ用）。
    - `org_members` を取得（カテゴリC: 担当者特定用）。
 
@@ -81,7 +81,7 @@ Cowork で毎朝自動実行する場合:
 
 ## Step 3: タスク一括作成
 
-各メッセージについて直接 `notion-create-pages` でタスクを作成（task-manage スキルは経由しない）。
+各メッセージについて直接 `notion-create-pages` でタスクを作成（managing-tasks スキルは経由しない）。
 
 ### 共通フィールド
 
@@ -89,7 +89,7 @@ Cowork で毎朝自動実行する場合:
 |---|---|
 | Title | `From @{sender}: {メッセージ概要（50字以内）}` |
 | Description | 元メッセージ全文 + 末尾に `Source: {ツール名} DM from @{sender} at {datetime}` |
-| Tags | `["message-intake"]` |
+| Tags | `["ingesting-messages"]` |
 | Context | `Received via {ツール名} on {date}` |
 
 ### カテゴリ別フィールド
@@ -99,7 +99,7 @@ Cowork で毎朝自動実行する場合:
    - Title: `[ヒアリング] {依頼者名}への確認: {質問概要}`
    - Status: `Ready`
    - Executor: `human`
-   - Assignees: `[依頼者]` (Load `${CLAUDE_PLUGIN_ROOT}/skills/member-lookup/SKILL.md` で解決)
+   - Assignees: `[依頼者]` (Load `${CLAUDE_PLUGIN_ROOT}/skills/looking-up-members/SKILL.md` で解決)
    - 依頼者が特定できない場合: Assignees 空, Context に「送信者: {sender}」を記録
 2. 本タスクを作成:
    - Status: `Blocked`
@@ -116,7 +116,7 @@ Cowork で毎朝自動実行する場合:
 **カテゴリC（別メンバーへ）:**
 - Status: `Backlog`
 - Executor: `human`（他人担当時は必ず human 固定）
-- Assignees: Load `${CLAUDE_PLUGIN_ROOT}/skills/member-lookup/SKILL.md` で担当者を解決
+- Assignees: Load `${CLAUDE_PLUGIN_ROOT}/skills/looking-up-members/SKILL.md` で担当者を解決
   - 担当者が特定できない場合: Assignees 空, Context に「想定担当者: {名前またはヒント}」を記録
 - Working Directory: 空欄（他人のFS不明）
 - Branch: 空欄（他人のgit環境不明）

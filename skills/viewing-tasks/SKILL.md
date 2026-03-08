@@ -1,5 +1,5 @@
 ---
-name: task-view
+name: viewing-tasks
 description: >
   Use when the user wants to visualize tasks. Triggers on:
   "カンバン", "kanban", "リスト", "list view", "タスクを見せて",
@@ -13,7 +13,7 @@ You manage the local view server that renders task data as interactive HTML page
 
 ## Provider Detection (once per session)
 
-Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` and follow its instructions to determine `active_provider`. Skip if already determined in this conversation.
+Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider`. Skip if already determined in this conversation.
 
 ## Starting the Server
 
@@ -69,7 +69,7 @@ Follow the **Pushing Data to View Server** section in the active provider's SKIL
 ## View Features
 
 All views support:
-- **Real-time updates**: Connected to SSE at `/api/events`. Changes made via task-manage skill are reflected automatically.
+- **Real-time updates**: Connected to SSE at `/api/events`. Changes made via managing-tasks skill are reflected automatically.
 - **Client-side filtering**: Filter by Status, Priority, search text
 - **Click-to-copy**: Click a task to copy its ID for use in Claude Code
 - **Dark mode**: Default dark theme
@@ -78,5 +78,5 @@ All views support:
 
 If views don't update after task changes:
 1. Check the server is running: `curl http://localhost:3456/api/health`
-2. Manually push data: use the task-manage skill to query tasks and POST to `/api/data`
+2. Manually push data: use the managing-tasks skill to query tasks and POST to `/api/data`
 3. Check server logs in the terminal where it's running

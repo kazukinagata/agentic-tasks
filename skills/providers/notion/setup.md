@@ -1,6 +1,6 @@
 # Headless Tasks — Notion Provider Setup
 
-This file contains Notion-specific setup steps. It is called by the task-setup skill
+This file contains Notion-specific setup steps. It is called by the setting-up-tasks skill
 after the active provider has been confirmed as **notion**.
 
 ## Step 1: Verify Notion MCP Connection
@@ -116,7 +116,7 @@ Create a page using `notion-create-pages` under `PARENT_PAGE_ID`:
 
 Replace the placeholders with the actual IDs from Step 4.
 For `selfUserId`: call `notion-get-users` with `user_id: "self"` and use the returned `id` value.
-This allows `identity-resolve` to work without an API call on subsequent sessions.
+This allows `resolving-identity` to work without an API call on subsequent sessions.
 
 After the JSON block, append the following as plain text:
 
@@ -137,5 +137,5 @@ If yes, create a test task using `notion-create-pages` with the Tasks database a
 - properties: `{"Status": "Ready", "Priority": "Medium"}`
 
 Tell the user setup is complete and they can start using:
-- Natural language task management (`task-manage` skill)
-- Visual views (`task-view` skill)
+- Natural language task management (`managing-tasks` skill)
+- Visual views (`viewing-tasks` skill)

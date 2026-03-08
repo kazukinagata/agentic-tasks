@@ -1,6 +1,6 @@
 ---
-name: provider-detection
-description: Internal shared skill loaded by task-agent, task-manage, and task-view to determine the active data source provider. Not intended for direct user invocation.
+name: detecting-provider
+description: Internal shared skill loaded by executing-tasks, managing-tasks, and viewing-tasks to determine the active data source provider. Not intended for direct user invocation.
 user-invocable: false
 ---
 
@@ -30,4 +30,4 @@ If provider is still undetermined, use AskUserQuestion:
 > "Multiple data source MCPs are available. Which provider should I use for headless-tasks? Available: [list detected providers]"
 
 ## No MCP Detected
-If no provider MCP is found at all, inform the user they need to run the **task-setup** skill first to configure a data source, then stop.
+If no provider MCP is found at all, inform the user they need to run the **setting-up-tasks** skill first to configure a data source, then stop.

@@ -1,5 +1,5 @@
 ---
-name: task-manage
+name: managing-tasks
 description: >
   Use when the user wants to create, update, delete, or query tasks.
   Triggers on: "add task", "create task", "update task", "done", "change status",
@@ -12,7 +12,7 @@ You are managing tasks in the configured data source. Use the provider-specific 
 
 ## Provider Detection (once per session)
 
-Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` and follow its instructions to determine `active_provider`. Skip if already determined in this conversation.
+Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider`. Skip if already determined in this conversation.
 
 After provider detection, also check the config for sprint fields (if present):
 - `sprintsDatabaseId` (optional — present only if scrum is enabled)
@@ -53,14 +53,14 @@ After provider detection, also check the config for sprint fields (if present):
 | Team | relation | → Teams DB |
 | Assignees | people | Human executor assignment |
 | Branch | rich_text | Git branch name (e.g. feature/task-slug). Leave blank to work on the current branch |
-| Sprint | relation | → Sprints DB (バッチ割り当て。scrum-setup 後に使用可能) |
+| Sprint | relation | → Sprints DB (バッチ割り当て。setting-up-scrum 後に使用可能) |
 | Complexity Score | number | オーケストレーターが自動計算。Backlog→Ready 昇格時に記入 |
 | Backlog Order | number | バックログ位置（小さいほど優先）。エージェント提案・人間上書き可 |
 
 ## State Transition Rules
 
 Valid transitions:
-- Backlog → Ready (when description + acceptance criteria are filled; also calculate Complexity Score if absent)
+- Backlog → Ready (when description + acceptance criteria + Assignees are filled; also calculate Complexity Score if absent)
 - Ready → In Progress (when dispatched to executor)
 - In Progress → In Review (when `Requires Review` is checked and work is done)
 - In Progress → Done (when `Requires Review` is unchecked and work is done)
@@ -113,14 +113,14 @@ When the user asks "what should I do next?" or "next task":
 
 **自分のタスクの場合:**
 - ユーザーが「自分の」「my」と明示した場合:
-  1. Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` → `active_provider`.
-  2. Load `${CLAUDE_PLUGIN_ROOT}/skills/identity-resolve/SKILL.md` → `current_user`.
+  1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` → `active_provider`.
+  2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` → `current_user`.
   3. `Assignees` に `current_user` を自動セット（確認不要）。
 
 **他メンバーへの割り当ての場合:**
 - ユーザーが他のメンバー名を指定した場合:
-  1. Load `${CLAUDE_PLUGIN_ROOT}/skills/identity-resolve/SKILL.md` → `org_members` も取得。
-  2. Load `${CLAUDE_PLUGIN_ROOT}/skills/member-lookup/SKILL.md` でメンバーIDを解決。
+  1. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` → `org_members` も取得。
+  2. Load `${CLAUDE_PLUGIN_ROOT}/skills/looking-up-members/SKILL.md` でメンバーIDを解決。
   3. 候補が複数の場合は AskUserQuestion で確認。
   4. メンバーが見つからない場合のみ AskUserQuestion でメンバーを聞く。
   5. 以下のフィールドを強制適用（他人担当時の制約）:
@@ -164,7 +164,7 @@ In AskUserQuestion, include a description with each option explaining why it is 
 For tasks with Executor=claude-code where the target is a git repository:
 - Suggest setting the Branch field (not mandatory)
 - Default candidate: `feature/<task-title-slug>`
-- If set, task-agent can create an isolated environment via `git worktree add`
+- If set, executing-tasks can create an isolated environment via `git worktree add`
 - If left blank, work proceeds on the current branch (not suitable for parallel execution)
 
 ### Description and Acceptance Criteria Quality

@@ -1,5 +1,5 @@
 ---
-name: sprint-standup
+name: running-standup
 description: >
   Use when the user wants a sprint status report or standup.
   Triggers on: "standup", "status report", "agent status", "スタンドアップ",

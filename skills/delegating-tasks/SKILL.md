@@ -1,5 +1,5 @@
 ---
-name: task-delegate
+name: delegating-tasks
 description: >
   タスクを組織の別メンバーに委譲する。Triggers on: "delegate task",
   "assign to", "タスクを渡す", "〇〇さんに任せて", "transfer task", "reassign",
@@ -13,8 +13,8 @@ user-invocable: true
 
 ## Step 1: Provider Detection + Identity Resolve
 
-1. Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` and determine `active_provider`. Skip if already set.
-2. Load `${CLAUDE_PLUGIN_ROOT}/skills/identity-resolve/SKILL.md`:
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and determine `active_provider`. Skip if already set.
+2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md`:
    - Resolve `current_user` (delegator identity).
    - Also resolve `org_members` (needed for recipient lookup).
 
@@ -26,7 +26,7 @@ If the user did not specify a task clearly:
 
 ## Step 3: Identify the Recipient
 
-1. Load `${CLAUDE_PLUGIN_ROOT}/skills/member-lookup/SKILL.md`.
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/looking-up-members/SKILL.md`.
 2. Run member lookup with the recipient name/email the user provided.
 3. Handle results:
    - 0 matches → inform the user and ask for a different name or email.
@@ -65,7 +65,7 @@ Report:
 ```
 委譲完了: 「{task title}」→ @{recipient.name}
 Context に委譲履歴を追記しました。
-受取人が task-my-tasks を実行すると、このタスクが表示されます。
+受取人が viewing-my-tasks を実行すると、このタスクが表示されます。
 ```
 
 ## Field Constraints for Delegated Tasks

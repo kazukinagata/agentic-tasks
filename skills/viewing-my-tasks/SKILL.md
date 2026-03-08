@@ -1,5 +1,5 @@
 ---
-name: task-my-tasks
+name: viewing-my-tasks
 description: >
   自分宛のタスクを表示する。Triggers on: "my tasks", "自分のタスク",
   "assigned to me", "今日のタスク", "show my tasks", "what are my tasks",
@@ -13,8 +13,8 @@ user-invocable: true
 
 ## Step 1: Provider Detection + Identity Resolve
 
-1. Load `${CLAUDE_PLUGIN_ROOT}/skills/provider-detection/SKILL.md` and determine `active_provider`. Skip if already set.
-2. Load `${CLAUDE_PLUGIN_ROOT}/skills/identity-resolve/SKILL.md` and resolve `current_user`. Skip if already set.
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and determine `active_provider`. Skip if already set.
+2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` and resolve `current_user`. Skip if already set.
 
 ## Step 2: Fetch My Tasks
 
@@ -70,11 +70,11 @@ For each task where `Executor = human`:
 ## Step 5: --auto Mode
 
 If the user invoked with `--auto` flag or said "自動実行":
-- After displaying tasks, without further confirmation, execute the task-agent flow for all
+- After displaying tasks, without further confirmation, execute the executing-tasks flow for all
   `Ready` tasks where `Executor = claude-code` (up to `maxConcurrentAgents` limit).
 - 同時実行数を確認し、ランチャーファイルを生成し、Notion でクレームし、タスクごとに
-  tmux ペインを起動する並列ディスパッチを実行する。詳細は `/task-agent` を参照するか、
-  直接 `/task-agent --auto` を実行してください。
+  tmux ペインを起動する並列ディスパッチを実行する。詳細は `/executing-tasks` を参照するか、
+  直接 `/executing-tasks --auto` を実行してください。
 
 ## Language
 

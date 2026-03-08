@@ -1,5 +1,5 @@
 ---
-name: identity-resolve
+name: resolving-identity
 description: Internal shared skill to resolve current user identity and org members. Not intended for direct user invocation.
 user-invocable: false
 ---
@@ -11,7 +11,7 @@ Resolve the current user's identity from the active provider.
 
 ## Prerequisites
 
-`active_provider` must already be determined (caller must run provider-detection first).
+`active_provider` must already be determined (caller must run detecting-provider first).
 If `active_provider` is not set, stop and return an error to the caller.
 
 ## Step 1: Resolve Current User

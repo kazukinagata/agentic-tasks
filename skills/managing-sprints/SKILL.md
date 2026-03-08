@@ -1,5 +1,5 @@
 ---
-name: sprint-manage
+name: managing-sprints
 description: >
   Use when the user wants to manage sprints (batches) or the product backlog.
   Triggers on: "start sprint", "begin sprint", "new sprint", "plan sprint",
