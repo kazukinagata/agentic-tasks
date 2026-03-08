@@ -103,7 +103,7 @@ cd "<working-directory>"
 
 # Execute task (Interactive mode: TUI is displayed in real time)
 PROMPT=$(cat "$SDIR/task-$IDX.md")
-claude --permission-mode dontAsk "$PROMPT" 2>&1 | tee "$SDIR/task-$IDX.log"
+claude --permission-mode bypassPermissions "$PROMPT" 2>&1 | tee "$SDIR/task-$IDX.log"
 EXIT_CODE=${PIPESTATUS[0]}
 
 if [ $EXIT_CODE -ne 0 ]; then
@@ -261,5 +261,5 @@ For each task:
 - Respect `maxConcurrentAgents` limit by subtracting current In Progress count
 - Order strictly: generate files → claim in Notion → launch tmux
 - Write Session Reference only after pane creation succeeds (no speculative writes)
-- Use `--permission-mode dontAsk` (never use `--dangerously-skip-permissions`)
+- Use `--permission-mode bypassPermissions` (never use `--dangerously-skip-permissions`)
 - On tmux unavailable: error message + fallback to sequential Agent tool execution
