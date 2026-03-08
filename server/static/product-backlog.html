@@ -5,48 +5,319 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product Backlog</title>
   <style>
+    :root {
+      --bg: #000000;
+      --surface-primary: rgba(28, 28, 30, 0.8);
+      --surface-secondary: rgba(44, 44, 46, 0.6);
+      --surface-tertiary: rgba(58, 58, 60, 0.4);
+      --separator: rgba(84, 84, 88, 0.35);
+      --label-primary: #ffffff;
+      --label-secondary: rgba(235, 235, 245, 0.6);
+      --label-tertiary: rgba(235, 235, 245, 0.3);
+      --blue: #0a84ff;
+      --green: #30d158;
+      --orange: #ff9f0a;
+      --red: #ff453a;
+      --purple: #bf5af2;
+      --indigo: #5e5ce6;
+      --gray: #98989d;
+      --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      --radius-card: 12px;
+      --radius-badge: 8px;
+      --radius-pill: 20px;
+      --shadow: 0 0 0 0.5px rgba(0,0,0,0.3), 0 2px 12px rgba(0,0,0,0.3);
+      --transition: cubic-bezier(0.25, 0.46, 0.45, 0.94) 250ms;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0f1117; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; display: flex; flex-direction: column; }
-    header { background: #1a1f2e; border-bottom: 1px solid #2d3748; padding: 14px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex-shrink: 0; }
-    header h1 { font-size: 18px; font-weight: 600; color: #a78bfa; flex: 1; }
-    .filter-bar { display: flex; gap: 10px; align-items: center; }
-    select, input { background: #2d3748; border: 1px solid #4a5568; color: #e2e8f0; padding: 5px 10px; border-radius: 6px; font-size: 13px; outline: none; }
-    select:focus, input:focus { border-color: #7c3aed; }
-    .status-bar { padding: 6px 20px; font-size: 12px; color: #718096; background: #141720; border-bottom: 1px solid #2d3748; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-    .sse-dot { width: 8px; height: 8px; border-radius: 50%; background: #48bb78; display: inline-block; }
-    .sse-dot.disconnected { background: #fc8181; }
-    .table-wrap { flex: 1; overflow: auto; padding: 16px 20px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead th { background: #141720; color: #718096; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px; border-bottom: 1px solid #2d3748; text-align: left; position: sticky; top: 0; cursor: pointer; user-select: none; white-space: nowrap; }
-    thead th:hover { color: #a78bfa; }
-    tbody tr { border-bottom: 1px solid #1a1f2e; transition: background 0.1s; cursor: pointer; }
-    tbody tr:hover { background: #1a1f2e; }
-    td { padding: 9px 12px; vertical-align: middle; }
-    .order-num { color: #4a5568; font-size: 12px; font-weight: 600; text-align: right; width: 40px; }
-    .task-title { color: #e2e8f0; font-weight: 500; }
-    .task-title.blocked-title { color: #718096; }
-    .blocked-icon { color: #fc8181; margin-right: 4px; font-style: normal; }
-    .dep-chain { font-size: 11px; color: #4a9ec9; margin-top: 3px; }
-    .badge { display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; }
-    .p-urgent { color: #fc8181; background: #3d1515; }
-    .p-high   { color: #f6ad55; background: #3d2415; }
-    .p-medium { color: #63b3ed; background: #1a2d4a; }
-    .p-low    { color: #a0aec0; background: #2d3748; }
-    .s-backlog { color: #a0aec0; background: #2d3748; }
-    .s-ready   { color: #63b3ed; background: #1a2d4a; }
-    .score-cell { color: #a78bfa; font-weight: 600; text-align: center; }
-    .executor-cell { color: #68d391; font-size: 11px; font-family: monospace; }
-    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: #4a5568; text-align: center; gap: 12px; padding: 60px; }
-    .empty-state h2 { color: #718096; font-size: 20px; }
-    .toast { position: fixed; bottom: 20px; right: 20px; background: #2d3748; color: #e2e8f0; padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; border: 1px solid #4a5568; }
+
+    body {
+      background: var(--bg);
+      color: var(--label-primary);
+      font-family: var(--font);
+      font-size: 14px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--surface-primary);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 0.5px solid var(--separator);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--label-primary);
+      letter-spacing: -0.01em;
+      flex-shrink: 0;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--label-tertiary);
+      margin-right: auto;
+    }
+
+    .sse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .sse-dot.disconnected { background: var(--red); }
+
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    #search {
+      background: var(--surface-secondary);
+      border: none;
+      color: var(--label-primary);
+      padding: 7px 14px 7px 34px;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      font-family: var(--font);
+      outline: none;
+      width: 180px;
+      transition: background var(--transition);
+    }
+    #search:focus { background: var(--surface-tertiary); }
+    .search-wrap {
+      position: relative;
+    }
+    .search-wrap::before {
+      content: '';
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(235,235,245,0.3)' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z'/%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      pointer-events: none;
+    }
+
+    select {
+      background: var(--surface-secondary);
+      border: none;
+      color: var(--label-secondary);
+      padding: 7px 12px;
+      border-radius: var(--radius-badge);
+      font-size: 13px;
+      font-family: var(--font);
+      outline: none;
+      cursor: pointer;
+      transition: background var(--transition);
+      -webkit-appearance: none;
+      appearance: none;
+      padding-right: 28px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(235,235,245,0.3)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+    select:focus { background: var(--surface-tertiary); }
+
+    .back-link {
+      color: var(--label-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      background: var(--surface-secondary);
+      transition: background var(--transition), color var(--transition);
+      flex-shrink: 0;
+    }
+    .back-link:hover {
+      background: var(--surface-tertiary);
+      color: var(--label-primary);
+    }
+
+    .table-wrap {
+      flex: 1;
+      overflow: auto;
+      padding: 16px 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      background: var(--bg);
+      color: var(--label-tertiary);
+      font-weight: 500;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 10px 16px;
+      border-bottom: 0.5px solid var(--separator);
+      text-align: left;
+      position: sticky;
+      top: 0;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    thead th:hover { color: var(--label-secondary); }
+
+    tbody tr {
+      border-bottom: 0.5px solid var(--separator);
+      transition: background var(--transition);
+      cursor: pointer;
+    }
+    tbody tr:hover { background: var(--surface-tertiary); }
+
+    td { padding: 12px 16px; vertical-align: middle; }
+
+    .order-num {
+      color: var(--label-tertiary);
+      font-size: 12px;
+      font-weight: 400;
+      text-align: right;
+      width: 40px;
+    }
+
+    .task-title {
+      color: var(--label-primary);
+      font-weight: 500;
+    }
+    .task-title.blocked-title {
+      color: var(--label-secondary);
+    }
+
+    .blocked-icon {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 6px;
+      color: var(--red);
+      font-style: normal;
+      vertical-align: middle;
+    }
+    .blocked-icon svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .dep-chain {
+      font-size: 11px;
+      color: var(--label-tertiary);
+      margin-top: 3px;
+    }
+    .dep-chain-name {
+      color: var(--blue);
+    }
+
+    .blocked-row {
+      background: rgba(255, 69, 58, 0.05);
+    }
+    .blocked-row:hover {
+      background: rgba(255, 69, 58, 0.08);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .p-urgent { color: var(--red); background: rgba(255, 69, 58, 0.15); }
+    .p-high   { color: var(--orange); background: rgba(255, 159, 10, 0.15); }
+    .p-medium { color: var(--blue); background: rgba(10, 132, 255, 0.15); }
+    .p-low    { color: var(--gray); background: rgba(152, 152, 157, 0.15); }
+
+    .s-backlog { color: var(--gray); background: rgba(152, 152, 157, 0.15); }
+    .s-ready   { color: var(--indigo); background: rgba(94, 92, 230, 0.15); }
+
+    .score-cell {
+      color: var(--indigo);
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .executor-cell {
+      color: var(--label-secondary);
+      font-size: 12px;
+      font-family: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, monospace;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      color: var(--label-tertiary);
+      text-align: center;
+      gap: 12px;
+      padding: 80px 40px;
+    }
+    .empty-state h2 {
+      color: var(--label-secondary);
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface-primary);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      color: var(--label-primary);
+      padding: 12px 20px;
+      border-radius: var(--radius-card);
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 999;
+      box-shadow: var(--shadow);
+    }
     .toast.show { opacity: 1; }
   </style>
 </head>
 <body>
 <header>
   <h1>Product Backlog</h1>
+  <div class="header-status">
+    <span class="sse-dot disconnected" id="sse-dot"></span>
+    <span id="sse-status">Connecting...</span>
+    <span id="task-count"></span>
+  </div>
   <div class="filter-bar">
-    <input type="text" id="search" placeholder="Search..." style="width:160px">
+    <div class="search-wrap">
+      <input type="text" id="search" placeholder="Search...">
+    </div>
     <select id="filter-priority">
       <option value="">All Priority</option>
       <option>Urgent</option><option>High</option><option>Medium</option><option>Low</option>
@@ -60,14 +331,9 @@
       <option value="unblocked">Unblocked only</option>
       <option value="blocked">Blocked only</option>
     </select>
-    <a href="/selector.html" style="color:#a78bfa;text-decoration:none;font-size:13px">← Views</a>
+    <a href="/selector.html" class="back-link">Views</a>
   </div>
 </header>
-<div class="status-bar">
-  <span class="sse-dot disconnected" id="sse-dot"></span>
-  <span id="sse-status">Connecting...</span>
-  <span id="task-count"></span>
-</div>
 <div class="table-wrap" id="table-wrap">
   <table id="backlog-table">
     <thead>
@@ -131,7 +397,7 @@
 
     const tbody = document.getElementById('table-body');
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#4a5568;padding:40px">No backlog tasks</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--label-tertiary);padding:40px">No backlog tasks</td></tr>';
       document.getElementById('task-count').textContent = '0 tasks';
       return;
     }
@@ -140,16 +406,17 @@
       const pc = t.priority ? prioClass[t.priority] : '';
       const sc = statusClass[t.status] || '';
       const isBlocked = t.blockedBy && t.blockedBy.length > 0;
-      const depNames = (t.blockedBy || []).map(id => esc(titleMap[id] || id.slice(0,8)+'...')).join(', ');
-      return `<tr onclick="openTask('${esc(t.url || '')}', '${t.id}')">
+      const depNames = (t.blockedBy || []).map(id => '<span class="dep-chain-name">' + esc(titleMap[id] || id.slice(0,8)+'...') + '</span>').join(', ');
+      const blockedSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a4 4 0 0 0-4 4v2H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V5a4 4 0 0 0-4-4zm2.5 6H5.5V5a2.5 2.5 0 0 1 5 0v2z"/></svg>';
+      return `<tr class="${isBlocked ? 'blocked-row' : ''}" onclick="openTask('${esc(t.url || '')}', '${t.id}')">
         <td class="order-num">${t.backlogOrder != null ? t.backlogOrder : (i+1)*1000}</td>
         <td>
           <div class="task-title${isBlocked?' blocked-title':''}">
-            ${isBlocked ? '<i class="blocked-icon">🔒</i>' : ''}${esc(t.title)}
+            ${isBlocked ? '<i class="blocked-icon">' + blockedSvg + '</i>' : ''}${esc(t.title)}
           </div>
           ${isBlocked ? `<div class="dep-chain">Blocked by: ${depNames}</div>` : ''}
         </td>
-        <td>${t.priority ? `<span class="badge ${pc}">${esc(t.priority)}</span>` : '<span style="color:#4a5568">—</span>'}</td>
+        <td>${t.priority ? `<span class="badge ${pc}">${esc(t.priority)}</span>` : '<span style="color:var(--label-tertiary)">—</span>'}</td>
         <td class="score-cell">${t.complexityScore != null ? t.complexityScore : '—'}</td>
         <td>${`<span class="badge ${sc}">${esc(t.status)}</span>`}</td>
         <td class="executor-cell">${t.executor ? esc(t.executor) : '—'}</td>
@@ -163,12 +430,12 @@
   function renderScoreBar(score) {
     const max = 13;
     const pct = Math.min(score / max * 100, 100);
-    const color = score <= 3 ? '#68d391' : score <= 8 ? '#f6ad55' : '#fc8181';
+    const color = score <= 3 ? 'var(--green)' : score <= 8 ? 'var(--orange)' : 'var(--red)';
     return `<div style="display:flex;align-items:center;gap:6px">
-      <div style="width:60px;height:5px;background:#2d3748;border-radius:3px;overflow:hidden">
-        <div style="width:${pct}%;height:100%;background:${color};border-radius:3px"></div>
+      <div style="width:60px;height:4px;background:var(--surface-tertiary);border-radius:2px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:2px"></div>
       </div>
-      <span style="font-size:10px;color:${color}">${score}</span>
+      <span style="font-size:11px;color:${color};font-weight:500">${score}</span>
     </div>`;
   }
 
