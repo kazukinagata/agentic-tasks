@@ -30,7 +30,7 @@ Group tasks by Status and display in the following order:
 ### In Progress
 For each task, show:
 - Title, Priority
-- `Executor` value + `Session Reference` (if set) — e.g., "claude-code / tmux: ht-abc123"
+- Executor / Session Reference（存在する場合はそのまま表示: tmux セッション名でも cowork:xxx でも）
 - `Dispatched At` (if set)
 
 ### Ready
@@ -53,28 +53,16 @@ If `sprintsDatabaseId` is in config and an Active Sprint exists:
 - Mark sprint tasks with `[Sprint]` prefix.
 - Show sprint tasks first within each status group.
 
-## Step 4: Human → Agent Re-assignment UI
+## Step 4: Next Actions
 
-For each task where `Executor = human`:
-- Ask: "「{task title}」をAgentに実行させますか？ [claude-code / cowork / このままhuman]"
-- If user selects `claude-code` or `cowork`:
-  1. Ask for `Working Directory` (自分の絶対パス, required).
-  2. Ask for `Branch` (任意, leave blank to skip).
-  3. Update task:
-     - `Executor` → selected value
-     - `Working Directory` → provided path
-     - `Branch` → provided value (if any)
-     - `Assignees` unchanged
-  4. Push data to view server (per provider SKILL.md).
+タスク一覧表示後、次のアクションを案内する:
 
-## Step 5: --auto Mode
-
-If the user invoked with `--auto` flag or said "自動実行":
-- After displaying tasks, without further confirmation, execute the executing-tasks flow for all
-  `Ready` tasks where `Executor = claude-code` (up to `maxConcurrentAgents` limit).
-- 同時実行数を確認し、ランチャーファイルを生成し、Notion でクレームし、タスクごとに
-  tmux ペインを起動する並列ディスパッチを実行する。詳細は `/executing-tasks` を参照するか、
-  直接 `/executing-tasks --auto` を実行してください。
+```
+次のアクション:
+- タスクを実行: /executing-tasks
+- タスクを管理（再割り当て・ステータス変更等）: /managing-tasks
+- タスクを委譲: /delegating-tasks
+```
 
 ## Language
 

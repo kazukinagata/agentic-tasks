@@ -109,7 +109,9 @@ Cowork で毎朝自動実行する場合:
 
 **カテゴリB（自分がやる）:**
 - Status: `Ready`
-- Executor: コンテキストから判断。コード作業→`claude-code`、外部連携→`cowork`
+- Executor: 環境とコンテキストから判断:
+  - `execution_environment = "cowork"`: AI 実行タスクのデフォルトは `cowork`
+  - `execution_environment = "claude-code"`: コード作業 → `claude-code`、外部連携 → `cowork`
 - Assignees: `[current_user]`
 - Working Directory: 空欄（ユーザーが後で設定）
 

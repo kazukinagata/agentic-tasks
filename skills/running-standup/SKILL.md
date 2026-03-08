@@ -88,7 +88,16 @@ A task is "stalled" when:
   - No score: default threshold = 24h
 
 Recommend actions for stalled tasks:
-- Check if the tmux session / Cowork task is still alive
+
+**Claude Code 環境:**
+- tmux セッション確認: `tmux has-session -t <session-ref> 2>/dev/null`
+- セッションが死んでいれば stalled と判定
+
+**Cowork 環境:**
+- `mcp__scheduled-tasks__list_scheduled_tasks` で該当タスクの状態を確認
+- Session Reference の `cowork:<taskId>` から taskId を抽出して検索
+
+**共通:**
 - Consider restarting the task
 - Consider reducing scope (split into smaller tasks)
 

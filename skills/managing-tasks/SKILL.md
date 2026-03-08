@@ -159,6 +159,13 @@ Present options and recommended reasons to the user and let them decide.
 
 In AskUserQuestion, include a description with each option explaining why it is recommended.
 
+### 環境別の推奨
+
+- `execution_environment = "cowork"` の場合: AI 実行タスクは `cowork` を推奨。
+  `claude-code` も選択可能だが、実行には別途 Claude Code 環境が必要と案内する。
+- `execution_environment = "claude-code"` の場合: AI 実行タスクは `claude-code` を推奨。
+  `cowork` も選択可能だが、実行には Cowork 環境が必要と案内する。
+
 ### Branch (git worktree support)
 
 For tasks with Executor=claude-code where the target is a git repository:
@@ -171,6 +178,16 @@ For tasks with Executor=claude-code where the target is a git repository:
 
 - Description: Detailed enough to execute without additional questions
 - Acceptance Criteria: Verifiable conditions such as "command X succeeds" or "file Y exists"
+
+## Human → Agent Re-assignment
+
+ユーザーが Executor=human のタスクを Agent に変更したい場合:
+- AskUserQuestion: "「{task title}」をAgentに実行させますか？ [claude-code / cowork / このままhuman]"
+- claude-code or cowork 選択時:
+  1. Working Directory を確認（required）
+  2. Branch を確認（optional）
+  3. Executor, Working Directory, Branch を更新
+  4. View Server にデータ push
 
 ## Bulk Operations
 

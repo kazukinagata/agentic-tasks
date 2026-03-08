@@ -10,7 +10,7 @@ user-invocable: true
 
 # Headless Tasks — Task Execution
 
-You orchestrate the execution of tasks. Tasks can be executed one at a time in the current session, or in parallel using tmux panes.
+You orchestrate the execution of tasks. Tasks can be executed one at a time in the current session, or in parallel (tmux panes in Claude Code / Scheduled Tasks in Cowork).
 
 ## Provider Detection + Identity Resolve (once per session)
 
@@ -30,7 +30,9 @@ If any Core field is missing, follow the active provider SKILL.md's instructions
 1. Query tasks where:
    - Status = "Ready"
    - Blocked By is empty (no unresolved dependencies)
-   - Executor = "claude-code"
+   - Executor = current environment's executor type:
+     - `execution_environment = "claude-code"` → Executor = "claude-code"
+     - `execution_environment = "cowork"` → Executor = "cowork"
    - Assignees contains `current_user.id`
 2. Count In Progress tasks with the same filter conditions (Status = "In Progress")
 3. Calculate `available_slots = maxConcurrentAgents - in_progress_count` (config default: 3)
@@ -53,14 +55,25 @@ Display the task list:
 3. [Medium] Fix Bug #42     → /home/user/project-c
 ```
 
-**`--auto` モード時:** tmux 並列 + plan モードで自動実行（確認スキップ）。
+**`--auto` モード時:**
+- Claude Code: tmux 並列 + plan モードで自動実行（確認スキップ）
+- Cowork: Scheduled Task 並列作成で自動実行（確認スキップ）
 
 **通常モード時:** AskUserQuestion で実行方法を選択:
+
+**Claude Code 環境 (`execution_environment = "claude-code"`):**
 
 | 選択肢 | 説明 |
 |--------|------|
 | 1つずつ実行 (Recommended) | タスクを1つ選んで現在のセッションで実行 |
 | tmux 並列実行 | 複数タスクを tmux ペインで同時実行 |
+
+**Cowork 環境 (`execution_environment = "cowork"`):**
+
+| 選択肢 | 説明 |
+|--------|------|
+| 1つずつ実行 (Recommended) | タスクを1つ選んで現在のセッションで実行 |
+| Cowork Scheduled Task 並列作成 | 各タスクを Scheduled Task として登録し並列実行 |
 
 #### 「1つずつ実行」選択時
 
@@ -73,14 +86,38 @@ Display the task list:
    - 完了時: Agent Output に結果を記録、Status を Requires Review に応じて "In Review" or "Done" に更新
    - エラー時: Error Message にエラー詳細を記録、Status を "Blocked" に更新
 
-#### 「tmux 並列実行」選択時
+#### 「tmux 並列実行」選択時（Claude Code 環境のみ）
 
 1. AskUserQuestion で permission mode を選択:
    - plan (Recommended)
    - default
    - acceptEdits
    - bypassPermissions
-2. Phase 3〜6 に進む（tmux 並列実行フロー）
+2. Phase 3〜6 に進む（Claude Code: tmux 並列実行フロー）
+
+#### 「Cowork Scheduled Task 並列作成」選択時（Cowork 環境のみ）
+
+1. **Dispatch Prompt 生成:** 各タスクについて既存の Dispatch Prompt Template を使い prompt テキストを構築
+2. **Notion クレーム:** 各タスクの Status → "In Progress", Dispatched At → now
+3. **Scheduled Task 一括作成:** 各タスクについて `mcp__scheduled-tasks__create_scheduled_task` を呼ぶ:
+   - `taskId`: `ht-<notion-page-id-prefix-8char>` (kebab-case)
+   - `prompt`: 構築した dispatch prompt
+   - `description`: `Headless Tasks: <task-title>`
+   - `cronExpression`: 省略（手動実行 = アドホック）
+4. **Session Reference 書き込み:** Notion の Session Reference に `cowork:<taskId>` を記録
+5. **レポート出力:**
+   ```
+   N件の Cowork Scheduled Task を作成しました:
+   - ht-abc12345 → Feature Login
+   - ht-def67890 → API Tests
+
+   Cowork の Scheduled Tasks 画面から各タスクを実行してください。
+   完了状況の確認: /viewing-my-tasks
+   ```
+
+### Claude Code: tmux 並列実行フロー
+
+以下の Phase 3〜6 は Claude Code 環境専用です。
 
 ### Phase 3: Prepare Files
 
@@ -249,12 +286,14 @@ Content of `$SDIR/task-{i}.md`. Replace `<On Completion>` with the provider-spec
 タスクの Notion ページ ID: `<page-id>`
 
 完了時は以下を実行:
-1. `notion-update-page` で "Agent Output" フィールドに実行結果を書く
+1. `notion-update-page` で "Agent Output" フィールドに実行結果を書く（両環境で利用可能）
 2. Status を更新:
    - Requires Review = ON の場合: "In Review"
    - Requires Review = OFF の場合: "Done"
 3. エラー時: "Error Message" にエラー詳細を書き、Status を "Blocked" に更新
 4. Notion 更新に失敗した場合はエラーを無視して実行を完了させること
+
+Note: Working Directory は Claude Code では絶対パス、Cowork ではワークスペース相対パスとなる。
 
 ## Rules
 - 既存コードのパターン・規約に従うこと
@@ -267,9 +306,9 @@ Content of `$SDIR/task-{i}.md`. Replace `<On Completion>` with the provider-spec
 
 ---
 
-## Fallback: Sequential Execution (tmux unavailable)
+## Fallback: Sequential Execution
 
-If tmux is not installed, fall back to sequential Agent tool execution:
+**Claude Code 環境:** tmux が利用不可の場合、Agent ツールで逐次実行にフォールバック:
 
 For each task:
 1. Set Status → "In Progress", Dispatched At → now
@@ -278,13 +317,17 @@ For each task:
 4. On success: write result to `Agent Output`, transition Status per `Requires Review`
 5. On failure: write error to `Error Message`, set Status → "Blocked"
 
+**Cowork 環境:** Scheduled Task 作成が不可の場合、現セッション内で1つずつ実行にフォールバック（「1つずつ実行」と同じフロー）。
+
 ## Safety
 
 - Default: single task in current session
-- tmux parallel is opt-in via AskUserQuestion
+- Parallel execution is opt-in via AskUserQuestion (tmux in Claude Code, Scheduled Tasks in Cowork)
 - Default permission mode for tmux agents: plan
 - Never use `--dangerously-skip-permissions`
 - Respect `maxConcurrentAgents` limit by subtracting current In Progress count
-- Order strictly: generate files → claim in Notion → launch tmux
-- Write Session Reference only after pane creation succeeds (no speculative writes)
-- On tmux unavailable: error message + fallback to sequential Agent tool execution
+- Claude Code: Order strictly: generate files → claim in Notion → launch tmux
+- Cowork: Order strictly: generate prompts → claim in Notion → create Scheduled Tasks
+- Write Session Reference only after pane/task creation succeeds (no speculative writes)
+- On tmux unavailable (Claude Code): error message + fallback to sequential Agent tool execution
+- On Scheduled Task creation failure (Cowork): fallback to sequential in-session execution

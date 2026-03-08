@@ -31,3 +31,16 @@ If provider is still undetermined, use AskUserQuestion:
 
 ## No MCP Detected
 If no provider MCP is found at all, inform the user they need to run the **setting-up-tasks** skill first to configure a data source, then stop.
+
+## Environment Detection
+
+Provider 検出後、実行環境も判定し `execution_environment` を会話コンテキスト変数に設定する。
+**Skip if already set in this conversation.**
+
+判定ロジック:
+1. 環境変数 `CLAUDE_CODE_IS_COWORK` が `1` → `execution_environment = "cowork"`
+2. それ以外 → `execution_environment = "claude-code"`
+
+（`CLAUDECODE=1` は両環境で共通のため判定には使わない）
+
+この値は downstream スキル（executing-tasks, managing-tasks 等）で実行フロー分岐に使用する。
