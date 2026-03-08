@@ -1,7 +1,9 @@
 ---
 name: managing-tasks
 description: >
-  Use when the user wants to create, update, delete, or query tasks.
+  Creates, updates, deletes, and queries tasks in the configured data source.
+  Handles task creation with required confirmations, state transitions,
+  complexity scoring, and "next task" recommendations.
   Triggers on: "add task", "create task", "update task", "done", "change status",
   "list tasks", "what's next", "next task", "block", "assign", "prioritize".
 ---
@@ -203,9 +205,8 @@ After creating, updating, or deleting tasks, push fresh data to the view server 
 If `sprintsDatabaseId` is available, also push sprint data to the view server:
 
 ```bash
-curl -s -X POST http://localhost:3456/api/sprint-data \
-  -H "Content-Type: application/json" \
-  -d '<sprints_json>' -o /dev/null 2>/dev/null || true
+bash ${CLAUDE_PLUGIN_ROOT}/skills/scripts/push-view-data.sh \
+  --sprints '<sprints_json>'
 ```
 
 Sprints JSON format: `{ "sprints": [...], "currentSprintId": "<active_sprint_id_or_null>", "updatedAt": "<ISO>" }`

@@ -1,7 +1,8 @@
 ---
 name: managing-sprints
 description: >
-  Use when the user wants to manage sprints (batches) or the product backlog.
+  Manages sprint (batch) lifecycle and product backlog. Handles sprint planning,
+  status, backlog ordering, and task-to-sprint assignment.
   Triggers on: "start sprint", "begin sprint", "new sprint", "plan sprint",
   "sprint planning", "end sprint", "close sprint", "sprint status",
   "what's in this sprint", "show sprint", "sprint backlog", "add to sprint",
@@ -13,13 +14,11 @@ description: >
 
 Manages the sprint (batch) lifecycle and product backlog. A "sprint" here is a scope-box (Objective), not a time-box.
 
-## Database Configuration
+## Provider Detection + Config (once per session)
 
-1. Use `notion-search` with query "Headless Tasks Config" to find the config page
-2. Retrieve the page body using `notion-fetch`
-3. Parse JSON to extract `tasksDatabaseId`, `sprintsDatabaseId`, `maxConcurrentAgents`
+Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
 
-If `sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
+If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
 
 ---
 
@@ -29,7 +28,7 @@ If `sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
 
 ### Step 1: Guard
 
-Fetch all sprints from `sprintsDatabaseId`. If any sprint has Status = "Active", report:
+Fetch all sprints from `headless_config.sprintsDatabaseId`. If any sprint has Status = "Active", report:
 ```
 現在アクティブなスプリントが存在します: <Sprint Name>
 新しいスプリントを開始する前に、現在のスプリントを終了してください ("end sprint")
@@ -39,7 +38,7 @@ Fetch all sprints from `sprintsDatabaseId`. If any sprint has Status = "Active",
 
 Use AskUserQuestion to ask:
 - **Goal** (必須): このスプリントの目標・完了条件を記述してください
-- **Max Concurrent Agents** (省略可、省略時は config の `maxConcurrentAgents` を使用): 並列実行上限
+- **Max Concurrent Agents** (省略可、省略時は `headless_config.maxConcurrentAgents` を使用): 並列実行上限
 
 ### Step 3: Analyze Backlog
 
@@ -102,9 +101,9 @@ view server: http://localhost:3456/sprint-backlog.html
 
 **Triggered by**: "sprint status", "what's in this sprint", "show sprint", "スプリント状況"
 
-1. Find the Active sprint from `sprintsDatabaseId`
+1. Find the Active sprint from `headless_config.sprintsDatabaseId`
 2. Fetch all tasks with Sprint = <Active Sprint ID>
-3. Calculate stall threshold: tasks with Status = "In Progress" AND Dispatched At older than (Complexity Score × 4) hours
+3. Calculate stall threshold: tasks with Status = "In Progress" AND Dispatched At older than (Complexity Score × stallThresholdMultiplier (see detecting-provider Constants)) hours
 
 Display:
 ```
@@ -122,7 +121,7 @@ Goal: <Goal Text>
 完了率: <Done Score> / <Total Score> Complexity Score (<N>%)
 ```
 
-Flag STALLED tasks (In Progress with Dispatched At > Score×4 hours ago) with yellow/red text.
+Flag STALLED tasks (In Progress with Dispatched At > Score × stallThresholdMultiplier hours ago) with yellow/red text.
 
 ---
 
@@ -185,20 +184,10 @@ Flag STALLED tasks (In Progress with Dispatched At > Score×4 hours ago) with ye
 
 ---
 
-## "Next Task" Logic (Sprint-Aware)
+## "Next Task"
 
-When the user asks "what should I do next?" or "next task":
-
-**If Active sprint exists:**
-1. Fetch tasks: Sprint = ActiveSprint AND Status = "Ready" AND Blocked By = empty
-2. Sort by: Backlog Order (asc) → Priority (Urgent > High > Medium > Low) → Complexity Score (desc)
-3. Check running agent count: count tasks with Status = "In Progress" in the sprint
-4. If running count >= maxConcurrentAgents: "現在 <N> エージェントが実行中です（上限: <M>）。完了を待つか上限を増やしてください。"
-5. If Ready = 0: "スプリント内に Ready タスクがありません。Backlog からタスクを移動しますか？"
-6. Present the top Ready task
-
-**If no Active sprint:**
-- Fallback to standard logic: Status = "Ready" AND Blocked By = empty → Priority → Due Date
+"what should I do next?" や "next task" には `/managing-tasks` を案内する。
+Sprint-aware な Next Task ロジックは managing-tasks に統一されている。
 
 ---
 
@@ -207,13 +196,9 @@ When the user asks "what should I do next?" or "next task":
 After any data modification, push fresh data to the view server:
 
 ```bash
-curl -s -X POST http://localhost:3456/api/data \
-  -H "Content-Type: application/json" \
-  -d '<tasks_json>' -o /dev/null 2>/dev/null || true
-
-curl -s -X POST http://localhost:3456/api/sprint-data \
-  -H "Content-Type: application/json" \
-  -d '<sprints_json>' -o /dev/null 2>/dev/null || true
+bash ${CLAUDE_PLUGIN_ROOT}/skills/scripts/push-view-data.sh \
+  --tasks '<tasks_json>' \
+  --sprints '<sprints_json>'
 ```
 
 Tasks JSON format: `{ "tasks": [...], "updatedAt": "<ISO>" }`

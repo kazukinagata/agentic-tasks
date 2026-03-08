@@ -1,9 +1,10 @@
 ---
 name: viewing-my-tasks
 description: >
-  自分宛のタスクを表示する。Triggers on: "my tasks", "自分のタスク",
-  "assigned to me", "今日のタスク", "show my tasks", "what are my tasks",
-  "自分担当", "自分のタスクを見せて"
+  Displays tasks assigned to the current user, grouped by status. Shows sprint
+  context and suggests next actions (execute, manage, delegate).
+  Triggers on: "my tasks", "自分のタスク", "assigned to me", "今日のタスク",
+  "show my tasks", "what are my tasks", "自分担当", "自分のタスクを見せて"
 user-invocable: true
 ---
 

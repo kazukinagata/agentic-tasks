@@ -1,7 +1,8 @@
 ---
 name: setting-up-scrum
 description: >
-  Use when the user wants to enable scrum/sprint support for headless-tasks.
+  Provisions the Sprints database and extends the Tasks DB with sprint-related
+  fields (Sprint relation, Complexity Score, Backlog Order). Idempotent and opt-in.
   Triggers on: "set up scrum", "enable scrum", "add scrum", "set up sprints",
   "スクラムをセットアップ", "スプリントを使いたい", "バッチ実行したい".
 ---
@@ -10,15 +11,15 @@ description: >
 
 This skill provisions the Sprints (Objectives) database and extends the Tasks DB with sprint-related fields. It is opt-in and idempotent.
 
-## Database Configuration
+## Provider Detection + Config (once per session)
 
-1. Use `notion-search` with query "Headless Tasks Config" to find the config page
-2. Retrieve the page body using `notion-fetch` with the page URL/ID
-3. Parse the JSON code block to extract all database IDs
+Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+
+If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
 
 ## Idempotency Check
 
-Before doing anything, check if `sprintsDatabaseId` already exists in the config JSON.
+Before doing anything, check if `headless_config.sprintsDatabaseId` already exists.
 If it does, report "Scrum は既に設定済みです（sprintsDatabaseId: <ID>）" and exit.
 
 ## Step 1: Create Sprints (Objectives) DB
@@ -43,7 +44,7 @@ After creating the DB, note its ID as `SPRINTS_DS_ID`.
 
 ## Step 2: Add Sprint Relation to Tasks DB
 
-Obtain the Tasks DB data source ID via `notion-fetch` on `tasksDatabaseId`.
+Obtain the Tasks DB data source ID via `notion-fetch` on `headless_config.tasksDatabaseId`.
 
 Add a dual relation (one call per direction):
 
@@ -59,12 +60,8 @@ This creates a `Sprint` column on Tasks that points to the Sprints DB, and a bac
 ADD COLUMN "Complexity Score" NUMBER
 ```
 
-**Complexity Score calculation guide** (for use in managing-tasks when promoting Backlog→Ready):
-- Base: number of Acceptance Criteria lines × 2
-- +1 per 200 tokens in Description
-- +2 per level of Blocked By dependency chain depth
-- Reference past similar tasks' cycle time from Agent Output if available
-- Round to nearest integer (typical range: 1–13)
+Complexity Score の計算ロジックは managing-tasks の "Backlog → Ready: Complexity Score Calculation" セクション、
+または `scripts/calc-complexity.py` を参照。
 
 ## Step 4: Add Backlog Order to Tasks DB
 

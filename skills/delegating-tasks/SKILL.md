@@ -1,9 +1,10 @@
 ---
 name: delegating-tasks
 description: >
-  タスクを組織の別メンバーに委譲する。Triggers on: "delegate task",
-  "assign to", "タスクを渡す", "〇〇さんに任せて", "transfer task", "reassign",
-  "委譲", "担当を変えて", "別の人に渡して"
+  Delegates a task to another organization member by updating Assignees,
+  resetting executor fields, and recording delegation history in Context.
+  Triggers on: "delegate task", "assign to", "タスクを渡す", "〇〇さんに任せて",
+  "transfer task", "reassign", "委譲", "担当を変えて", "別の人に渡して"
 user-invocable: true
 ---
 

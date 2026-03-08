@@ -1,7 +1,8 @@
 ---
 name: analyzing-sprint-metrics
 description: >
-  Use when the user wants sprint performance analysis or retrospective insights.
+  Analyzes sprint performance metrics and generates retrospective insights
+  from task data. Produces throughput, agent performance, and dependency reports.
   Triggers on: "sprint metrics", "retrospective", "retro", "agent performance",
   "振り返り", "メトリクス", "レトロ", "パフォーマンス分析".
 ---
@@ -10,14 +11,15 @@ description: >
 
 Automated agent performance analysis derived from Notion task data. Replaces human retrospective with quantitative metrics.
 
-## Database Configuration
+## Provider Detection + Config (once per session)
 
-1. Use `notion-search` with query "Headless Tasks Config"
-2. Retrieve and parse config JSON to get `tasksDatabaseId`, `sprintsDatabaseId`
+Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+
+If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
 
 ## Step 1: Identify Target Sprint
 
-If the user specified a sprint name, find it in `sprintsDatabaseId`.
+If the user specified a sprint name, find it in `headless_config.sprintsDatabaseId`.
 Otherwise, use AskUserQuestion: "どのスプリントのメトリクスを表示しますか？（省略時: 最新の Closed スプリント）"
 If no Closed sprint exists, use the most recent Completed sprint.
 
@@ -38,7 +40,7 @@ If no Closed sprint exists, use the most recent Completed sprint.
 ### Agent Performance
 - **Timeout/Stall rate**: tasks where evidence of stall exists in Metrics snapshots / total dispatched tasks
   - Dispatched = tasks that had Status = "In Progress" at any point (Dispatched At is set)
-  - Stall = Dispatched At set AND elapsed > Score×4h AND required human intervention (check Agent Output / Error Message for retry indicators)
+  - Stall = Dispatched At set AND elapsed > Score × stallThresholdMultiplier (see detecting-provider Constants) AND required human intervention (check Agent Output / Error Message for retry indicators)
 - **Error rate**: tasks with Error Message not empty / total dispatched
 - **Human intervention**: tasks where Agent Output or Error Message mentions "manual", "retry", "human" or Status went Blocked→In Progress
 - **Avg cycle time**: for Done tasks with Dispatched At set, estimate from daily Metrics snapshots
@@ -77,7 +79,7 @@ RECOMMENDATIONS:
 ### Recommendation Rules
 
 Generate recommendations automatically:
-- If any task's actual cycle time > Score×6h: "Score 推定が低すぎた可能性 — <task name>"
+- If any task's actual cycle time > Score × (stallThresholdMultiplier × 1.5): "Score 推定が低すぎた可能性 — <task name>"
 - If stall rate > 30%: "ストール率が高い (>30%) — maxConcurrentAgents を減らすか、タスクのスコープを縮小を検討"
 - If stall rate < 10%: "ストール率が良好 (<10%) — maxConcurrentAgents を増やせる可能性あり"
 - If blocked tasks > 40% of sprint: "依存チェーンがボトルネック — スプリント計画時に依存解消タスクを先行させる"

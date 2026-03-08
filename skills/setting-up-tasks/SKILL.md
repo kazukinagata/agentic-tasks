@@ -1,8 +1,10 @@
 ---
 name: setting-up-tasks
 description: >
-  Use when the user says "setup headless tasks", "initialize task management",
-  "configure notion tasks", "configure data source", or needs to set up a data source for the headless-tasks plugin.
+  Guides initial setup of the Headless Tasks plugin — detects or configures
+  MCP connections and runs provider-specific database initialization.
+  Triggers on: "setup headless tasks", "initialize task management",
+  "configure notion tasks", "configure data source".
 ---
 
 # Headless Tasks — Setup Guide

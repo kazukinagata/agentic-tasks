@@ -1,8 +1,9 @@
 ---
 name: viewing-tasks
 description: >
-  Use when the user wants to visualize tasks. Triggers on:
-  "カンバン", "kanban", "リスト", "list view", "タスクを見せて",
+  Manages the local view server that renders task data as interactive HTML pages
+  (Kanban, List, Calendar, Gantt). Starts the server, pushes data, and opens views.
+  Triggers on: "カンバン", "kanban", "リスト", "list view", "タスクを見せて",
   "show tasks", "ビュー", "view", "可視化", "visualize",
   "ガントチャート", "gantt", "カレンダー", "calendar".
 ---

@@ -1,9 +1,10 @@
 ---
 name: ingesting-messages
 description: >
-  メッセージングツールの自分宛メッセージを読み込み、タスクに自動変換する。
-  Cowork Scheduled Task として毎日実行。Triggers on:
-  "message intake", "メッセージ処理", "intake", "メッセージをタスク化",
+  Reads incoming messages (Slack, Teams, Discord) addressed to the current user
+  and auto-converts them into categorized Notion tasks (hearing-needed, self-action,
+  or delegate). Designed for daily scheduled execution.
+  Triggers on: "message intake", "メッセージ処理", "intake", "メッセージをタスク化",
   "process messages", "今日のメッセージ", "メッセージからタスク作成"
 user-invocable: true
 ---
@@ -130,7 +131,10 @@ Cowork で毎朝自動実行する場合:
 1. 処理済みメッセージIDを「Headless Tasks Message Intake Log」に追記。
    - 最大1000件を保持（FIFO: 古いIDから削除）。
    - フォーマット: `{ "slack": [...ids...], "teams": [...ids...] }` をページ本文の JSON コードブロックに書き込む。
-2. Provider SKILL.md の **Pushing Data to View Server** セクションに従いデータをpush。
+2. Push data to view server:
+```bash
+bash ${CLAUDE_PLUGIN_ROOT}/skills/scripts/push-view-data.sh --tasks '<tasks_json>'
+```
 
 ---
 

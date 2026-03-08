@@ -1,7 +1,8 @@
 ---
 name: reviewing-sprint
 description: >
-  Use when the user wants to end or close a sprint and review its results.
+  Generates an automated batch completion summary and closes the active sprint.
+  Reviews done/undone tasks, calculates velocity, and handles unfinished task disposition.
   Triggers on: "sprint review", "batch complete", "end sprint", "close sprint",
   "スプリント完了", "バッチ終了", "スプリントを終了", "スプリントを閉じる".
 ---
@@ -10,14 +11,15 @@ description: >
 
 Generates an automated batch completion summary and closes the sprint. The agent generates the summary; the human only approves the disposition of unfinished tasks.
 
-## Database Configuration
+## Provider Detection + Config (once per session)
 
-1. Use `notion-search` with query "Headless Tasks Config"
-2. Retrieve and parse config JSON to get `tasksDatabaseId`, `sprintsDatabaseId`
+Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+
+If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
 
 ## Step 1: Find Active Sprint
 
-Fetch all sprints from `sprintsDatabaseId`. Find the one with Status = "Active".
+Fetch all sprints from `headless_config.sprintsDatabaseId`. Find the one with Status = "Active".
 If none, report "アクティブなスプリントはありません" and exit.
 
 ## Step 2: Fetch Sprint Tasks
@@ -87,13 +89,9 @@ For each NOT DONE task based on the user's choice:
 ## Step 7: Push Updates to View Server
 
 ```bash
-curl -s -X POST http://localhost:3456/api/data \
-  -H "Content-Type: application/json" \
-  -d '<tasks_json>' -o /dev/null 2>/dev/null || true
-
-curl -s -X POST http://localhost:3456/api/sprint-data \
-  -H "Content-Type: application/json" \
-  -d '<sprints_json>' -o /dev/null 2>/dev/null || true
+bash ${CLAUDE_PLUGIN_ROOT}/skills/scripts/push-view-data.sh \
+  --tasks '<tasks_json>' \
+  --sprints '<sprints_json>'
 ```
 
 ## Step 8: Completion Report

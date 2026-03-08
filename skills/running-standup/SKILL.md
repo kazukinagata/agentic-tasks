@@ -1,7 +1,8 @@
 ---
 name: running-standup
 description: >
-  Use when the user wants a sprint status report or standup.
+  Generates an automated sprint status report with stall detection and blocked
+  task analysis. Replaces human standup format with quantitative metrics.
   Triggers on: "standup", "status report", "agent status", "スタンドアップ",
   "進捗確認", "burn down", "stalled tasks", "タイムアウト確認".
 ---
@@ -10,14 +11,15 @@ description: >
 
 Generates an automated status report for the active sprint. Focuses on stall detection and blocked task analysis rather than a human "yesterday/today/blockers" format.
 
-## Database Configuration
+## Provider Detection + Config (once per session)
 
-1. Use `notion-search` with query "Headless Tasks Config"
-2. Retrieve and parse config JSON to get `tasksDatabaseId`, `sprintsDatabaseId`
+Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+
+If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
 
 ## Step 1: Find Active Sprint
 
-Fetch all sprints from `sprintsDatabaseId`. Find the one with Status = "Active".
+Fetch all sprints from `headless_config.sprintsDatabaseId`. Find the one with Status = "Active".
 If none, report "アクティブなスプリントはありません" and exit.
 
 ## Step 2: Fetch Sprint Tasks
@@ -32,8 +34,9 @@ Fetch all tasks with Sprint = <Active Sprint ID>.
 **COMPLETED (since last report)** — Status = "Done" (completed recently)
 - Show: Task title, brief Agent Output summary if available
 
-**STALLED** — Status = "In Progress" AND Dispatched At is older than (Complexity Score × 4) hours
-- Stall threshold: If Complexity Score is null, use 24h as default
+**STALLED** — Status = "In Progress" AND Dispatched At is older than (Complexity Score × stallThresholdMultiplier) hours
+- stallThresholdMultiplier and stallDefaultHours are defined in detecting-provider Constants
+- Stall threshold: If Complexity Score is null, use stallDefaultHours as default
 - Show: Task title, Session Reference, elapsed hours, expected duration hint
 
 **BLOCKED** — Status = "Blocked" OR (Status = "Backlog"/"Ready" AND Blocked By is not empty)
@@ -81,11 +84,8 @@ Append to the existing content (do not overwrite).
 A task is "stalled" when:
 - Status = "In Progress"
 - `Dispatched At` is set
-- Hours since `Dispatched At` > (Complexity Score × 4)
-  - Score 1-3 tasks: stall threshold = 12-24h
-  - Score 5-8 tasks: stall threshold = 20-32h
-  - Score 13 tasks: stall threshold = 52h
-  - No score: default threshold = 24h
+- Hours since `Dispatched At` > (Complexity Score × stallThresholdMultiplier)
+  - stallThresholdMultiplier and stallDefaultHours are defined in detecting-provider Constants
 
 Recommend actions for stalled tasks:
 
