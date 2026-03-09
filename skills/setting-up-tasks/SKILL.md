@@ -77,6 +77,46 @@ ${CLAUDE_PLUGIN_ROOT}/skills/providers/{active_provider}/setup.md
 
 This file contains all provider-specific database creation, schema initialization, and verification steps.
 
+## Step 4: Daily Routine Scheduled Task Registration (Cowork only)
+
+After provider-specific setup completes, check the execution environment.
+
+### Environment Check
+
+Determine the environment:
+1. If environment variable `CLAUDE_CODE_IS_COWORK` is `1` → Cowork
+2. Otherwise → Claude Code (skip this step entirely)
+
+### Prompt User
+
+Use AskUserQuestion:
+> "Would you like to register a daily routine that automatically ingests messages and executes your assigned tasks every morning?"
+
+If the user declines, skip this step.
+
+### Ask Preferred Time
+
+If yes, use AskUserQuestion:
+> "What time should the daily routine run? (default: 09:00)"
+
+Accept the user's answer or default to 09:00.
+
+### Create Scheduled Task
+
+Call `mcp__scheduled-tasks__create_scheduled_task`:
+- `taskId`: `ht-daily-<current_user_id_prefix_8char>`
+- `prompt`: `Run the running-daily-tasks skill`
+- `description`: `Headless Tasks: Daily routine for <user_name>`
+- `cronExpression`: `0 <HH> * * *` (based on user's chosen time, e.g. `0 9 * * *` for 09:00)
+
+### Report
+
+```
+Daily routine registered: runs every day at <HH:MM>.
+Scheduled Task ID: ht-daily-<id>
+To modify: Cowork → Scheduled Tasks
+```
+
 ## Language
 
 Always communicate with the user in the language they are using.
