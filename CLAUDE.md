@@ -86,3 +86,17 @@ cd skills/viewing-tasks/server && npm install
 - The `CLAUDE_PLUGIN_ROOT` variable points to this repository root at runtime
 - Stall detection constants: `stallThresholdMultiplier=4`, `stallDefaultHours=24` (defined in detecting-provider)
 - `maxConcurrentAgents` defaults to 3 (configurable per sprint)
+
+## Semantic Versioning
+
+| Change Type | Version Bump | Example |
+|---|---|---|
+| Breaking changes | MAJOR | 0.x → 1.0.0 |
+| New features (new skills, new commands) | MINOR | 0.1.0 → 0.2.0 |
+| Bug fixes, docs fixes | PATCH | 0.2.0 → 0.2.1 |
+
+Before creating a PR that modifies `skills/` or `agents/`:
+1. Bump version in `.claude-plugin/plugin.json`
+2. Commit with message: `chore: bump version to X.Y.Z`
+
+Files that do NOT require version bumps: `docs/`, `.github/`, `*.md` (root), `test/`

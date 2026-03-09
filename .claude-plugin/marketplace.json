@@ -1,7 +1,8 @@
 {
-  "name": "headless-tasks-marketplace",
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "headless-tasks",
   "owner": {
-    "name": "kazukinagata"
+    "name": "Kazuki Nagata"
   },
   "metadata": {
     "description": "AI-native task management plugin for agents and humans"
@@ -9,15 +10,8 @@
   "plugins": [
     {
       "name": "headless-tasks",
-      "source": {
-        "source": "github",
-        "repo": "kazukinagata/headless-tasks"
-      },
-      "description": "AI-native task management for agents and humans. Natural language CRUD, real-time HTML views (kanban, list), and autonomous task execution. Supports any schema-definable data source.",
-      "version": "0.1.0",
-      "author": {
-        "name": "kazukinagata"
-      },
+      "source": "./",
+      "description": "AI-native task management for agents and humans. Natural language CRUD, real-time HTML views (kanban, list), and autonomous task execution.",
       "license": "MIT",
       "category": "productivity",
       "tags": ["tasks", "kanban", "agent", "ai-native", "headless"]
