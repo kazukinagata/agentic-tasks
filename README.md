@@ -1,12 +1,13 @@
 # Headless Tasks
 
-AI-native task management plugin for [Claude Code](https://claude.ai/code). Manage tasks through natural language, visualize them in real-time HTML views, and execute them autonomously with parallel agent orchestration.
+AI-native task management plugin for [Claude Code](https://claude.ai/code) and [Cowork](https://cowork.com). Manage tasks through natural language, visualize them in real-time HTML views, and execute them autonomously with parallel agent orchestration.
 
 ## Features
 
 - **Natural Language CRUD** — Create, update, query, and delete tasks by talking to Claude
-- **Real-time Views** — Kanban and List views served locally at `http://localhost:3456` with live updates via SSE
+- **Real-time Views** — Kanban, List, Calendar, and Gantt views served locally at `http://localhost:3456` with live updates via SSE (Claude Code)
 - **Autonomous Execution** — Dispatch tasks to parallel tmux sessions (Claude Code) or Scheduled Tasks (Cowork)
+- **Daily Routine** — Automated daily message intake + task dispatch via Cowork Scheduled Tasks
 - **Sprint Management** — Objective-based sprints with backlog ordering, velocity tracking, and automated retrospectives
 - **Stall Detection** — Automatic detection of stuck agents based on complexity-aware time thresholds
 - **Message Intake** — Auto-convert Slack/Teams DMs into categorized tasks
@@ -16,17 +17,52 @@ AI-native task management plugin for [Claude Code](https://claude.ai/code). Mana
 
 ### Prerequisites
 
-- [Claude Code](https://claude.ai/code) CLI installed
-- A Notion account (free tier works)
+- [Claude Code](https://claude.ai/code) CLI (v1.0.33+) or [Cowork](https://claude.com/cowork) (Pro / Max / Team / Enterprise)
+- A [Notion](https://www.notion.so/) account (free tier works)
 
-### Setup
+### Install the Plugin
 
-1. Install the plugin in Claude Code
-2. Run the setup skill:
+#### Claude Code (CLI / VS Code / Desktop)
+
+1. Add the marketplace:
+
+   ```
+   /plugin marketplace add kazukinagata/headless-tasks
+   ```
+
+2. Install the plugin:
+
+   ```
+   /plugin install headless-tasks@kazukinagata-headless-tasks
+   ```
+
+   You can also browse it interactively — run `/plugin`, go to the **Discover** tab, and select **headless-tasks**.
+
+#### Cowork
+
+1. Open the Cowork tab in Claude Desktop
+2. Click **Customize** in the left sidebar
+3. Click **Browse plugins** and search for **headless-tasks**, then click **Install**
+
+   Alternatively, upload the plugin file directly if you have it locally.
+
+### Connect Notion
+
+After installing the plugin, you need to connect a Notion workspace as the data source.
+
+1. Run the setup skill:
+
    ```
    /setting-up-tasks
    ```
-3. Follow the guided setup to connect your Notion workspace and create the Tasks database
+
+2. The skill auto-detects whether a Notion MCP connection already exists.
+   - **If not configured**: it will guide you through adding the Notion MCP server and authenticating via OAuth.
+   - **If already configured**: it will skip straight to database creation.
+
+3. Follow the prompts to create the Tasks database in your Notion workspace.
+
+> **Cowork users**: The setup skill also offers to register a daily routine as a Scheduled Task that automatically ingests messages and dispatches tasks each morning.
 
 ### Optional: Enable Scrum
 
@@ -62,6 +98,7 @@ This creates a Sprints database and adds sprint-related fields (Sprint, Complexi
 | "execute tasks" | Dispatch ready tasks for execution |
 | "do the next task" | Execute the top-priority task |
 | "process tasks --auto" | Auto-execute all ready tasks in parallel |
+| "daily tasks" | Run daily routine: message intake + task dispatch (Cowork) |
 
 ### Sprint Workflow
 
@@ -97,6 +134,7 @@ skills/
 ├── delegating-tasks/         # Task reassignment
 ├── ingesting-messages/       # Message-to-task conversion
 ├── running-standup/          # Sprint status reports
+├── running-daily-tasks/      # Daily message intake + task dispatch (Cowork)
 ├── reviewing-sprint/         # Sprint close and velocity
 └── analyzing-sprint-metrics/ # Retrospective analytics
 agents/
