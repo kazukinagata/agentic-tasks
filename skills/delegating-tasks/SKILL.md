@@ -7,7 +7,7 @@ description: >
 user-invocable: true
 ---
 
-# Headless Tasks — Task Delegate
+# Agentic Tasks — Task Delegate
 
 Delegates a task to another organization member. Changes Assignees to the recipient and appends delegation history to Context.
 

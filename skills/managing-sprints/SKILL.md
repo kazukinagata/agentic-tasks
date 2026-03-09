@@ -10,7 +10,7 @@ description: >
   "backlog order".
 ---
 
-# Headless Tasks — Sprint Management
+# Agentic Tasks — Sprint Management
 
 Manages the sprint (batch) lifecycle and product backlog. A "sprint" here is a scope-box (Objective), not a time-box.
 

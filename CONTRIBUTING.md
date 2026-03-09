@@ -1,6 +1,6 @@
-# Contributing to Headless Tasks
+# Contributing to Agentic Tasks
 
-Thank you for your interest in contributing to Headless Tasks!
+Thank you for your interest in contributing to Agentic Tasks!
 
 ## Getting Started
 

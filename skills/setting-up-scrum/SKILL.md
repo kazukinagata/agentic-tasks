@@ -6,7 +6,7 @@ description: >
   Triggers on: "set up scrum", "enable scrum", "add scrum", "set up sprints".
 ---
 
-# Headless Tasks — Scrum Setup
+# Agentic Tasks — Scrum Setup
 
 This skill provisions the Sprints (Objectives) database and extends the Tasks DB with sprint-related fields. It is opt-in and idempotent.
 

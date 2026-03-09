@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "headless-tasks",
+  "name": "agentic-tasks",
   "owner": {
     "name": "Kazuki Nagata"
   },
@@ -9,7 +9,7 @@
   },
   "plugins": [
     {
-      "name": "headless-tasks",
+      "name": "agentic-tasks",
       "source": "./",
       "description": "AI-native task management for agents and humans. Natural language CRUD, real-time HTML views (kanban, list), and autonomous task execution.",
       "license": "MIT",

@@ -9,7 +9,7 @@ description: >
 user-invocable: true
 ---
 
-# Headless Tasks — Task Execution
+# Agentic Tasks — Task Execution
 
 You orchestrate the execution of tasks. Tasks can be executed one at a time in the current session, or in parallel (tmux panes in Claude Code / Scheduled Tasks in Cowork).
 

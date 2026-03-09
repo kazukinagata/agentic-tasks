@@ -8,7 +8,7 @@ description: >
 user-invocable: true
 ---
 
-# Headless Tasks — Message Intake
+# Agentic Tasks — Message Intake
 
 Reads incoming messages from messaging tools addressed to the current user and auto-converts them into Notion tasks.
 **read-only**: Does not send any messages. Only creates tasks.
@@ -46,8 +46,8 @@ Inspect available MCP tools and determine which messaging tool to use:
 
 ### Message Intake Log Preparation
 
-1. Search for the "Headless Tasks Message Intake Log" page via `notion-search`.
-2. If not found: Auto-create via `notion-create-pages` (under the Headless Tasks parent page).
+1. Search for the "Agentic Tasks Message Intake Log" page via `notion-search`.
+2. If not found: Auto-create via `notion-create-pages` (under the Agentic Tasks parent page).
 3. Load the `processed_message_ids` set (per tool name) from the page body.
    Format example: `{ "slack": ["msg_id1", "msg_id2", ...] }`
 
@@ -127,7 +127,7 @@ Create tasks directly via `notion-create-pages` for each message (do not go thro
 
 ## Step 4: Log Update + View Server Push
 
-1. Append processed message IDs to the "Headless Tasks Message Intake Log".
+1. Append processed message IDs to the "Agentic Tasks Message Intake Log".
    - Retain up to 1000 entries (FIFO: remove oldest IDs first).
    - Format: Write `{ "slack": [...ids...], "teams": [...ids...] }` as a JSON code block in the page body.
 2. Push data to view server:

@@ -7,7 +7,7 @@ description: >
   "gantt", "calendar".
 ---
 
-# Headless Tasks — View Server
+# Agentic Tasks — View Server
 
 You manage the local view server that renders task data as interactive HTML pages.
 

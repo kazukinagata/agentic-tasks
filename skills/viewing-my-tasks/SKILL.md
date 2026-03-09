@@ -7,7 +7,7 @@ description: >
 user-invocable: true
 ---
 
-# Headless Tasks — My Tasks
+# Agentic Tasks — My Tasks
 
 Lists all tasks assigned to the current user (where Assignees contains the user).
 

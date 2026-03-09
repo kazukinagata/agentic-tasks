@@ -7,7 +7,7 @@ description: >
   "burn down", "stalled tasks".
 ---
 
-# Headless Tasks — Sprint Standup
+# Agentic Tasks — Sprint Standup
 
 Generates an automated status report for the active sprint. Focuses on stall detection and blocked task analysis rather than a human "yesterday/today/blockers" format.
 

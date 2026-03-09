@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Headless Tasks** is a Claude Code plugin for AI-native task management. It provides natural language CRUD operations, real-time HTML views (Kanban, List), and autonomous task execution via tmux parallel sessions or Cowork Scheduled Tasks. It supports any schema-definable data source through a provider abstraction (currently Notion).
+**Agentic Tasks** is a Claude Code plugin for AI-native task management. It provides natural language CRUD operations, real-time HTML views (Kanban, List), and autonomous task execution via tmux parallel sessions or Cowork Scheduled Tasks. It supports any schema-definable data source through a provider abstraction (currently Notion).
 
 ## Architecture
 

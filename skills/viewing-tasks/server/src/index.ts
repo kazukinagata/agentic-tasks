@@ -4,7 +4,7 @@ import app from "./app.js";
 const PORT = parseInt(process.env.PORT || "3456", 10);
 
 const server = serve({ fetch: app.fetch, port: PORT }, (info) => {
-  console.log(`Headless Tasks view server running on http://localhost:${info.port}`);
+  console.log(`Agentic Tasks view server running on http://localhost:${info.port}`);
 });
 
 const shutdown = () => {

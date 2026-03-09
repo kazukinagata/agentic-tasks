@@ -8,7 +8,7 @@ description: >
   "list tasks", "what's next", "next task", "block", "assign", "prioritize".
 ---
 
-# Headless Tasks — Task Management
+# Agentic Tasks — Task Management
 
 You are managing tasks in the configured data source. Use the provider-specific tools for all data operations.
 

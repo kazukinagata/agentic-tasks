@@ -1,4 +1,4 @@
-# Headless Tasks — Notion Provider Setup
+# Agentic Tasks — Notion Provider Setup
 
 This file contains Notion-specific setup steps. It is called by the setting-up-tasks skill
 after the active provider has been confirmed as **notion**.
@@ -26,12 +26,12 @@ Authenticate with your Notion account when prompted.
 ## Step 2: Choose Parent Page Location
 
 Use `AskUserQuestion` to ask:
-> "Where should I create the Headless Tasks workspace in Notion? Please provide a parent page name or URL. (Leave blank to create at the root of your workspace.)"
+> "Where should I create the Agentic Tasks workspace in Notion? Please provide a parent page name or URL. (Leave blank to create at the root of your workspace.)"
 
 ## Step 3: Create Parent Page
 
 Create a parent page using `notion-create-pages`:
-- Title: "Headless Tasks" (or as specified by user)
+- Title: "Agentic Tasks" (or as specified by user)
 - Parent: the page the user specified, or workspace root if blank
 
 Note the returned page ID as `PARENT_PAGE_ID`.
@@ -102,7 +102,7 @@ Steps 3 and 4 automatically create the synced `Tasks` property on Projects/Teams
 ## Step 5: Create Config Page
 
 Create a page using `notion-create-pages` under `PARENT_PAGE_ID`:
-- Title: "Headless Tasks Config"
+- Title: "Agentic Tasks Config"
 - Body: a code block (language: `json`) containing:
 
 ```json
@@ -130,7 +130,7 @@ After the JSON block, append the following as plain text:
 ## Step 6: Verify
 
 Use `AskUserQuestion` to confirm:
-> "Setup complete! I've created the Headless Tasks workspace in Notion with Tasks, Teams, and Projects databases, and a Config page storing the database IDs. Would you like me to create a test task to verify everything is working?"
+> "Setup complete! I've created the Agentic Tasks workspace in Notion with Tasks, Teams, and Projects databases, and a Config page storing the database IDs. Would you like me to create a test task to verify everything is working?"
 
 If yes, create a test task using `notion-create-pages` with the Tasks database as parent:
 - Title: "Test task — delete me"

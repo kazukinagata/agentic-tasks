@@ -4,7 +4,7 @@ description: Internal shared skill to resolve current user identity and org memb
 user-invocable: false
 ---
 
-# Headless Tasks — Identity Resolve
+# Agentic Tasks — Identity Resolve
 
 Resolve the current user's identity from the active provider.
 **Skip if `current_user` is already set in this conversation.**

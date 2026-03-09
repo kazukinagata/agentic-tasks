@@ -4,7 +4,7 @@ description: Detects the active data source provider and retrieves configuration
 user-invocable: false
 ---
 
-# Headless Tasks — Provider Detection
+# Agentic Tasks — Provider Detection
 
 Determine the active provider using the following layered check.
 **Skip if already determined in this conversation.**
@@ -20,14 +20,14 @@ If exactly one provider MCP is detected, use it. Load
 
 ## Layer 2: Conflict Resolution (multiple provider MCPs detected)
 If multiple provider MCPs are detected, determine the environment:
-- **Claude Code**: Check `env.HEADLESS_TASKS_PROVIDER` in `~/.claude/settings.json`
-- **Cowork / Global Instructions**: Look for `HEADLESS_TASKS_PROVIDER: <value>` in the Global Instructions or CLAUDE.md
+- **Claude Code**: Check `env.AGENTIC_TASKS_PROVIDER` in `~/.claude/settings.json`
+- **Cowork / Global Instructions**: Look for `AGENTIC_TASKS_PROVIDER: <value>` in the Global Instructions or CLAUDE.md
 
 If a value is found, use it as active_provider and load the corresponding provider SKILL.md.
 
 ## Layer 3: Ask User
 If provider is still undetermined, use AskUserQuestion:
-> "Multiple data source MCPs are available. Which provider should I use for headless-tasks? Available: [list detected providers]"
+> "Multiple data source MCPs are available. Which provider should I use for agentic-tasks? Available: [list detected providers]"
 
 ## No MCP Detected
 If no provider MCP is found at all, inform the user they need to run the **setting-up-tasks** skill first to configure a data source, then stop.
@@ -52,7 +52,7 @@ After detecting the provider, retrieve database IDs and constants from the Confi
 
 ### Notion Provider
 
-1. Search for the "Headless Tasks Config" page using `notion-search`
+1. Search for the "Agentic Tasks Config" page using `notion-search`
 2. Retrieve the page body using `notion-fetch`
 3. Parse the JSON code block and set the following as the `headless_config` session variable:
    - `tasksDatabaseId` (required)

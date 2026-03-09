@@ -8,7 +8,7 @@ description: >
 user-invocable: true
 ---
 
-# Headless Tasks — Daily Routine
+# Agentic Tasks — Daily Routine
 
 Unified daily routine that ingests messages into tasks and auto-dispatches Ready tasks assigned to the current user. Designed for autonomous daily execution via a Cowork Scheduled Task.
 
@@ -51,7 +51,7 @@ Inspect available MCP tools:
 
 Follow the same flow as the ingesting-messages skill:
 
-1. **Log Preparation**: Search for the "Headless Tasks Message Intake Log" page via `notion-search`. Create if not found.
+1. **Log Preparation**: Search for the "Agentic Tasks Message Intake Log" page via `notion-search`. Create if not found.
 2. **Fetch Messages**: Retrieve DMs / mentions from the past 24 hours addressed to `current_user`, excluding already-processed IDs, bots, and self.
 3. **Classify**: Categorize each message:
    - **A (Hearing Needed)**: Insufficient info → Blocked task + Blocker task (executor=human)
@@ -99,7 +99,7 @@ Update the task via `notion-update-page`:
 Call `mcp__scheduled-tasks__create_scheduled_task`:
 - `taskId`: `ht-<notion-page-id-prefix-8char>` (kebab-case)
 - `prompt`: the constructed dispatch prompt
-- `description`: `Headless Tasks: <task-title>`
+- `description`: `Agentic Tasks: <task-title>`
 - `cronExpression`: omit (ad-hoc, one-off execution)
 
 ### 3d: Write Session Reference

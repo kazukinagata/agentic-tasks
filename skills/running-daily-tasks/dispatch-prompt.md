@@ -7,7 +7,7 @@ The template below uses placeholders in angle brackets. Omit sections whose sour
 ````markdown
 # <Title>
 
-You are an AI agent executing a development task delegated by the Headless Tasks Orchestrator.
+You are an AI agent executing a development task delegated by the Agentic Tasks Orchestrator.
 Complete the task autonomously.
 
 ## Description

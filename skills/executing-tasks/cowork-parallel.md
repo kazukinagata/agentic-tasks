@@ -17,7 +17,7 @@ For each task:
 For each task, call `mcp__scheduled-tasks__create_scheduled_task`:
 - `taskId`: `ht-<notion-page-id-prefix-8char>` (kebab-case)
 - `prompt`: the constructed dispatch prompt
-- `description`: `Headless Tasks: <task-title>`
+- `description`: `Agentic Tasks: <task-title>`
 - `cronExpression`: omit (manual / ad-hoc execution)
 
 ## Step 4: Session Reference

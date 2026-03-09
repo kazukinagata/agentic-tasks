@@ -1,13 +1,13 @@
-# Headless Tasks — Notion Provider
+# Agentic Tasks — Notion Provider
 
-This file contains all Notion-specific implementation details for headless-tasks.
+This file contains all Notion-specific implementation details for agentic-tasks.
 Load this file when the active provider is **notion**.
 
 ## Database Configuration
 
 At the start of each session, read the config page to get database IDs:
 
-1. Use `notion-search` with query "Headless Tasks Config" to find the config page
+1. Use `notion-search` with query "Agentic Tasks Config" to find the config page
 2. Retrieve the page body using `notion-fetch` with the page URL/ID
 3. Parse the JSON code block to extract:
    - `tasksDatabaseId`

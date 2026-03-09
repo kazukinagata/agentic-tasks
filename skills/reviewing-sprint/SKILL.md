@@ -6,7 +6,7 @@ description: >
   Triggers on: "sprint review", "batch complete", "end sprint", "close sprint".
 ---
 
-# Headless Tasks — Sprint Review
+# Agentic Tasks — Sprint Review
 
 Generates an automated batch completion summary and closes the sprint. The agent generates the summary; the human only approves the disposition of unfinished tasks.
 

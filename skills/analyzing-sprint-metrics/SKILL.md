@@ -6,7 +6,7 @@ description: >
   Triggers on: "sprint metrics", "retrospective", "retro", "agent performance".
 ---
 
-# Headless Tasks — Sprint Metrics
+# Agentic Tasks — Sprint Metrics
 
 Automated agent performance analysis derived from Notion task data. Replaces human retrospective with quantitative metrics.
 

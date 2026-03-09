@@ -1,4 +1,4 @@
-# Headless Tasks
+# Agentic Tasks
 
 AI-native task management plugin for [Claude Code](https://claude.ai/code) and [Cowork](https://cowork.com). Manage tasks through natural language, visualize them in real-time HTML views, and execute them autonomously with parallel agent orchestration.
 
@@ -27,22 +27,22 @@ AI-native task management plugin for [Claude Code](https://claude.ai/code) and [
 1. Add the marketplace:
 
    ```
-   /plugin marketplace add kazukinagata/headless-tasks
+   /plugin marketplace add kazukinagata/agentic-tasks
    ```
 
 2. Install the plugin:
 
    ```
-   /plugin install headless-tasks@kazukinagata-headless-tasks
+   /plugin install agentic-tasks@kazukinagata-agentic-tasks
    ```
 
-   You can also browse it interactively — run `/plugin`, go to the **Discover** tab, and select **headless-tasks**.
+   You can also browse it interactively — run `/plugin`, go to the **Discover** tab, and select **agentic-tasks**.
 
 #### Cowork
 
 1. Open the Cowork tab in Claude Desktop
 2. Click **Customize** in the left sidebar
-3. Click **Browse plugins** and search for **headless-tasks**, then click **Install**
+3. Click **Browse plugins** and search for **agentic-tasks**, then click **Install**
 
    Alternatively, upload the plugin file directly if you have it locally.
 

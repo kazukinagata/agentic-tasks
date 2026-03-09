@@ -1,15 +1,15 @@
 ---
 name: setting-up-tasks
 description: >
-  Guides initial setup of the Headless Tasks plugin — detects or configures
+  Guides initial setup of the Agentic Tasks plugin — detects or configures
   MCP connections and runs provider-specific database initialization.
-  Triggers on: "setup headless tasks", "initialize task management",
+  Triggers on: "setup agentic tasks", "initialize task management",
   "configure notion tasks", "configure data source".
 ---
 
-# Headless Tasks — Setup Guide
+# Agentic Tasks — Setup Guide
 
-You are guiding the user through the initial setup of the Headless Tasks plugin.
+You are guiding the user through the initial setup of the Agentic Tasks plugin.
 
 ## Step 1: Check for Existing MCP Configuration
 
@@ -20,13 +20,13 @@ Inspect available MCP tools to detect any already-configured providers:
 
 ### If a single provider MCP is already present
 Use AskUserQuestion to confirm:
-> "I detected an existing [provider] MCP connection. Would you like to set up Headless Tasks using [provider]?"
+> "I detected an existing [provider] MCP connection. Would you like to set up Agentic Tasks using [provider]?"
 
 If yes, skip to Step 3 with that provider.
 
 ### If multiple provider MCPs are present
 Use AskUserQuestion to ask which one to use:
-> "I detected multiple data source MCPs: [list providers]. Which one should I set up Headless Tasks for?"
+> "I detected multiple data source MCPs: [list providers]. Which one should I set up Agentic Tasks for?"
 
 Then skip to Step 3 with the selected provider.
 
@@ -36,7 +36,7 @@ Continue to Step 2 to guide the user through MCP setup.
 ## Step 2: Choose a Data Source and Configure MCP
 
 Use AskUserQuestion to ask which data source the user wants to use:
-> "Which data source would you like to use for Headless Tasks?
+> "Which data source would you like to use for Agentic Tasks?
 > - **Notion** — recommended for teams, rich UI, free tier available
 > - Other providers coming soon (SQLite, Airtable, etc.)"
 
@@ -106,7 +106,7 @@ Accept the user's answer or default to 09:00.
 Call `mcp__scheduled-tasks__create_scheduled_task`:
 - `taskId`: `ht-daily-<current_user_id_prefix_8char>`
 - `prompt`: `Run the running-daily-tasks skill`
-- `description`: `Headless Tasks: Daily routine for <user_name>`
+- `description`: `Agentic Tasks: Daily routine for <user_name>`
 - `cronExpression`: `0 <HH> * * *` (based on user's chosen time, e.g. `0 9 * * *` for 09:00)
 
 ### Report
