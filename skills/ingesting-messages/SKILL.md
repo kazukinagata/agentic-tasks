@@ -4,133 +4,132 @@ description: >
   Reads incoming messages (Slack, Teams, Discord) addressed to the current user
   and auto-converts them into categorized Notion tasks (hearing-needed, self-action,
   or delegate). Designed for daily scheduled execution.
-  Triggers on: "message intake", "メッセージ処理", "intake", "メッセージをタスク化",
-  "process messages", "今日のメッセージ", "メッセージからタスク作成"
+  Triggers on: "message intake", "intake", "process messages"
 user-invocable: true
 ---
 
 # Headless Tasks — Message Intake
 
-メッセージングツールから自分宛メッセージを読み込み、Notion タスクに自動変換する。
-**read-only**: メッセージの送信は行わない。タスク作成のみ。
+Reads incoming messages from messaging tools addressed to the current user and auto-converts them into Notion tasks.
+**read-only**: Does not send any messages. Only creates tasks.
 
-## Cowork Scheduled Task 登録方法
+## Cowork Scheduled Task Setup
 
-Cowork で毎朝自動実行する場合:
+To run automatically every morning via Cowork:
 1. Cowork → Scheduled Tasks → New
-2. Trigger: Daily / 09:00（ユーザーのタイムゾーン）
-3. Prompt: `ingesting-messages スキルを実行してください`
+2. Trigger: Daily / 09:00 (user's timezone)
+3. Prompt: `Run the ingesting-messages skill`
 
 ---
 
-## Step 0: 準備
+## Step 0: Preparation
 
 ### Provider Detection + Identity Resolve
 
 1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` → `active_provider`. Skip if set.
 2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md`:
-   - `current_user` を取得（メッセージフィルタ用）。
-   - `org_members` を取得（カテゴリC: 担当者特定用）。
+   - Obtain `current_user` (for message filtering).
+   - Obtain `org_members` (for Category C: identifying assignees).
 
-### Messaging MCP 自動検出
+### Messaging MCP Auto-Detection
 
-利用可能なMCPツールを検査し、使用するメッセージングツールを決定:
+Inspect available MCP tools and determine which messaging tool to use:
 
-| ツール群 | サービス |
+| Tool group | Service |
 |---|---|
-| `slack-*` ツール群が存在 | Slack |
-| `teams-*` または `ms-teams-*` ツール群が存在 | Microsoft Teams |
-| `discord-*` ツール群が存在 | Discord |
+| `slack-*` tools exist | Slack |
+| `teams-*` or `ms-teams-*` tools exist | Microsoft Teams |
+| `discord-*` tools exist | Discord |
 
-- 複数検出: AskUserQuestion で「どのメッセージングサービスを使用しますか？」と確認。
-- 0件検出: 停止し「メッセージングMCPが設定されていません。Slack/Teams/DiscordのMCPを設定してください。」と案内。
+- Multiple detected: Use AskUserQuestion to ask "Which messaging service would you like to use?"
+- None detected: Stop and inform "No messaging MCP is configured. Please set up a Slack/Teams/Discord MCP."
 
-### Message Intake Log の準備
+### Message Intake Log Preparation
 
-1. `notion-search` で "Headless Tasks Message Intake Log" ページを検索。
-2. 存在しない場合: `notion-create-pages` で自動作成（Headless Tasks 親ページ配下）。
-3. ページ本文から `processed_message_ids` セット（ツール名別）を読み込み。
-   フォーマット例: `{ "slack": ["msg_id1", "msg_id2", ...] }`
-
----
-
-## Step 1: 未処理メッセージ取得
-
-検出されたMessaging MCPを使って過去24時間の DM / メンション を取得:
-
-- フィルタ条件:
-  - 宛先が自分（`current_user` に対するDMまたはメンション）
-  - `id ∉ processed_message_ids` (重複スキップ)
-  - Bot以外が送信
-  - 自分以外が送信（自分のメッセージは除外）
+1. Search for the "Headless Tasks Message Intake Log" page via `notion-search`.
+2. If not found: Auto-create via `notion-create-pages` (under the Headless Tasks parent page).
+3. Load the `processed_message_ids` set (per tool name) from the page body.
+   Format example: `{ "slack": ["msg_id1", "msg_id2", ...] }`
 
 ---
 
-## Step 2: メッセージ分類（3カテゴリ）
+## Step 1: Fetch Unprocessed Messages
 
-各メッセージを以下の3カテゴリに分類:
+Use the detected Messaging MCP to retrieve DMs / mentions from the past 24 hours:
 
-| カテゴリ | 判定基準 | 処理 |
+- Filter criteria:
+  - Addressed to self (DM or mention targeting `current_user`)
+  - `id ∉ processed_message_ids` (skip duplicates)
+  - Not sent by a bot
+  - Not sent by self (exclude own messages)
+
+---
+
+## Step 2: Classify Messages (3 Categories)
+
+Classify each message into one of 3 categories:
+
+| Category | Criteria | Action |
 |---|---|---|
-| **A: ヒアリング必要** | 情報不足・質問形式・曖昧な依頼・承認を求めている | 本タスク(Status=Blocked) + ブロッカータスク(Status=Ready, executor=human, Assignees=依頼者) |
-| **B: 自分がやる** | AI処理可能な実装・調査・文書化・明確な作業依頼 | タスク(Status=Ready, executor=cowork or claude-code, Assignees=self) |
-| **C: 別メンバーへ** | 明らかに他担当者向け（名前が明示されている等） | タスク(Status=Backlog, executor=human, Assignees=担当者) |
+| **A: Hearing Needed** | Insufficient info, question format, ambiguous request, seeking approval | Main task (Status=Blocked) + Blocker task (Status=Ready, executor=human, Assignees=requester) |
+| **B: Self-Action** | AI-processable implementation, research, documentation, clear work request | Task (Status=Ready, executor=cowork or claude-code, Assignees=self) |
+| **C: Delegate** | Clearly intended for another team member (name explicitly mentioned, etc.) | Task (Status=Backlog, executor=human, Assignees=assignee) |
 
-**分類が不明な場合**: カテゴリAとして処理（安全側）。
+**When classification is unclear**: Treat as Category A (safe default).
 
 ---
 
-## Step 3: タスク一括作成
+## Step 3: Bulk Task Creation
 
-各メッセージについて直接 `notion-create-pages` でタスクを作成（managing-tasks スキルは経由しない）。
+Create tasks directly via `notion-create-pages` for each message (do not go through the managing-tasks skill).
 
-### 共通フィールド
+### Common Fields
 
-| フィールド | 値 |
+| Field | Value |
 |---|---|
-| Title | `From @{sender}: {メッセージ概要（50字以内）}` |
-| Description | 元メッセージ全文 + 末尾に `Source: {ツール名} DM from @{sender} at {datetime}` |
+| Title | `From @{sender}: {message summary (50 chars max)}` |
+| Description | Full original message + append `Source: {tool_name} DM from @{sender} at {datetime}` |
 | Tags | `["ingesting-messages"]` |
-| Context | `Received via {ツール名} on {date}` |
+| Context | `Received via {tool_name} on {date}` |
 
-### カテゴリ別フィールド
+### Category-Specific Fields
 
-**カテゴリA（ヒアリング必要）:**
-1. ブロッカータスクを先に作成:
-   - Title: `[ヒアリング] {依頼者名}への確認: {質問概要}`
+**Category A (Hearing Needed):**
+1. Create the blocker task first:
+   - Title: `[Hearing] Confirm with {requester_name}: {question summary}`
    - Status: `Ready`
    - Executor: `human`
-   - Assignees: `[依頼者]` (Load `${CLAUDE_PLUGIN_ROOT}/skills/looking-up-members/SKILL.md` で解決)
-   - 依頼者が特定できない場合: Assignees 空, Context に「送信者: {sender}」を記録
-2. 本タスクを作成:
+   - Assignees: `[requester]` (Load `${CLAUDE_PLUGIN_ROOT}/skills/looking-up-members/SKILL.md` to resolve)
+   - If requester cannot be identified: Assignees empty, record "Sender: {sender}" in Context
+2. Create the main task:
    - Status: `Blocked`
-   - Blocked By: `[ブロッカータスクID]`
-   - Executor: 未定なので `human`
+   - Blocked By: `[blocker_task_id]`
+   - Executor: `human` (undetermined)
    - Assignees: `[current_user]`
 
-**カテゴリB（自分がやる）:**
+**Category B (Self-Action):**
 - Status: `Ready`
-- Executor: 環境とコンテキストから判断:
-  - `execution_environment = "cowork"`: AI 実行タスクのデフォルトは `cowork`
-  - `execution_environment = "claude-code"`: コード作業 → `claude-code`、外部連携 → `cowork`
+- Executor: Determine from environment and context:
+  - `execution_environment = "cowork"`: Default for AI-executed tasks is `cowork`
+  - `execution_environment = "claude-code"`: Code work → `claude-code`, external integrations → `cowork`
 - Assignees: `[current_user]`
-- Working Directory: 空欄（ユーザーが後で設定）
+- Working Directory: Empty (user sets later)
 
-**カテゴリC（別メンバーへ）:**
+**Category C (Delegate):**
 - Status: `Backlog`
-- Executor: `human`（他人担当時は必ず human 固定）
-- Assignees: Load `${CLAUDE_PLUGIN_ROOT}/skills/looking-up-members/SKILL.md` で担当者を解決
-  - 担当者が特定できない場合: Assignees 空, Context に「想定担当者: {名前またはヒント}」を記録
-- Working Directory: 空欄（他人のFS不明）
-- Branch: 空欄（他人のgit環境不明）
+- Executor: `human` (always fixed to human when assigned to others)
+- Assignees: Load `${CLAUDE_PLUGIN_ROOT}/skills/looking-up-members/SKILL.md` to resolve assignee
+  - If assignee cannot be identified: Assignees empty, record "Expected assignee: {name or hint}" in Context
+- Working Directory: Empty (other person's filesystem unknown)
+- Branch: Empty (other person's git environment unknown)
 
 ---
 
-## Step 4: ログ更新 + View Server Push
+## Step 4: Log Update + View Server Push
 
-1. 処理済みメッセージIDを「Headless Tasks Message Intake Log」に追記。
-   - 最大1000件を保持（FIFO: 古いIDから削除）。
-   - フォーマット: `{ "slack": [...ids...], "teams": [...ids...] }` をページ本文の JSON コードブロックに書き込む。
+1. Append processed message IDs to the "Headless Tasks Message Intake Log".
+   - Retain up to 1000 entries (FIFO: remove oldest IDs first).
+   - Format: Write `{ "slack": [...ids...], "teams": [...ids...] }` as a JSON code block in the page body.
 2. Push data to view server:
 ```bash
 # Silently skip if server is not running
@@ -141,14 +140,14 @@ curl -s http://localhost:3456/api/health -o /dev/null 2>/dev/null && \
 
 ---
 
-## Step 5: サマリー出力
+## Step 5: Summary Output
 
 ```
-[Message Intake 完了] via {ツール名}
-処理: N件 / スキップ: K件（処理済み）
-  A（ヒアリング必要）: X件 → Blocked タスク + ブロッカータスク作成
-  B（自分が対応）:     Y件 → Ready タスク作成
-  C（別メンバーへ）:   Z件 → Backlog タスク作成
+[Message Intake Complete] via {tool_name}
+Processed: N / Skipped: K (already processed)
+  A (Hearing Needed): X → Blocked tasks + Blocker tasks created
+  B (Self-Action):    Y → Ready tasks created
+  C (Delegate):       Z → Backlog tasks created
 ```
 
 ---

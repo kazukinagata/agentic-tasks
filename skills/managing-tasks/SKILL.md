@@ -55,9 +55,9 @@ After provider detection, also check the config for sprint fields (if present):
 | Team | relation | → Teams DB |
 | Assignees | people | Human executor assignment |
 | Branch | rich_text | Git branch name (e.g. feature/task-slug). Leave blank to work on the current branch |
-| Sprint | relation | → Sprints DB (バッチ割り当て。setting-up-scrum 後に使用可能) |
-| Complexity Score | number | オーケストレーターが自動計算。Backlog→Ready 昇格時に記入 |
-| Backlog Order | number | バックログ位置（小さいほど優先）。エージェント提案・人間上書き可 |
+| Sprint | relation | → Sprints DB (batch assignment; available after setting-up-scrum) |
+| Complexity Score | number | Auto-calculated by orchestrator; written when promoting Backlog → Ready |
+| Backlog Order | number | Backlog position (lower = higher priority). Agent-suggested, human-overridable |
 
 ## State Transition Rules
 
@@ -96,8 +96,8 @@ When the user asks "what should I do next?" or "next task":
 1. Fetch tasks: Sprint = ActiveSprint AND Status = "Ready" AND Blocked By = empty
 2. Sort by: Backlog Order (asc) → Priority (Urgent > High > Medium > Low) → Complexity Score (desc)
 3. Count tasks with Status = "In Progress" in the sprint (running agents)
-4. If running count >= `maxConcurrentAgents`: report "現在 <N> エージェントが実行中です（上限: <M>）。完了を待つか上限を増やしてください。"
-5. If Ready = 0: "スプリント内に Ready タスクがありません。Backlog からタスクを移動しますか？"
+4. If running count >= `maxConcurrentAgents`: report "Currently <N> agents are running (limit: <M>). Wait for completion or increase the limit."
+5. If Ready = 0: "No Ready tasks in the sprint. Move tasks from Backlog?"
 6. Present the top Ready task
 
 **If no Active sprint (or scrum not set up):**
@@ -111,30 +111,30 @@ When the user asks "what should I do next?" or "next task":
 
 ### Assignees and Identity Resolution
 
-**Assignees は常に1人**（スキルレベルのルール）。複数人が必要な場合はタスクを分割することを提案する。
+**Assignees is always exactly 1 person** (skill-level rule). If multiple people are needed, suggest splitting the task.
 
-**自分のタスクの場合:**
-- ユーザーが「自分の」「my」と明示した場合:
+**When the task is for the user themselves:**
+- When the user explicitly says "my" or "for me":
   1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` → `active_provider`.
   2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` → `current_user`.
-  3. `Assignees` に `current_user` を自動セット（確認不要）。
+  3. Automatically set `current_user` in `Assignees` (no confirmation needed).
 
-**他メンバーへの割り当ての場合:**
-- ユーザーが他のメンバー名を指定した場合:
-  1. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` → `org_members` も取得。
-  2. Load `${CLAUDE_PLUGIN_ROOT}/skills/looking-up-members/SKILL.md` でメンバーIDを解決。
-  3. 候補が複数の場合は AskUserQuestion で確認。
-  4. メンバーが見つからない場合のみ AskUserQuestion でメンバーを聞く。
-  5. 以下のフィールドを強制適用（他人担当時の制約）:
+**When assigning to another member:**
+- When the user specifies another member's name:
+  1. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` → also retrieve `org_members`.
+  2. Load `${CLAUDE_PLUGIN_ROOT}/skills/looking-up-members/SKILL.md` to resolve the member ID.
+  3. If multiple candidates match, confirm with AskUserQuestion.
+  4. Only ask via AskUserQuestion if the member cannot be found.
+  5. Force-apply the following fields (constraints when assigning to others):
 
-| フィールド | 値 | 理由 |
+| Field | Value | Reason |
 |---|---|---|
-| `Executor` | `human` 固定 | 担当者が自分で判断する |
-| `Working Directory` | 空欄 | 他人のFS情報は不明 |
-| `Branch` | 空欄 | 他人のgit環境は不明 |
-| `Session Reference` | 空欄 | 担当者のAgentが記録する |
-| `Dispatched At` | 空欄 | 担当者のAgentが記録する |
-| `Requires Review` | unchecked | 担当者が判断する |
+| `Executor` | always `human` | The assignee decides how to execute |
+| `Working Directory` | blank | The assignee's filesystem is unknown |
+| `Branch` | blank | The assignee's git environment is unknown |
+| `Session Reference` | blank | The assignee's agent will record this |
+| `Dispatched At` | blank | The assignee's agent will record this |
+| `Requires Review` | unchecked | The assignee decides |
 
 ### Required Confirmations (no guessing or omitting)
 
@@ -146,7 +146,7 @@ Do NOT infer and commit to values from the task description.
 | Executor | Execution method varies entirely by executor type |
 | Priority | Urgency depends on the user's current context |
 | Working Directory | Wrong path directly causes agent execution errors |
-| Sprint (if Active sprint exists) | "このタスクはスプリントに入れますか、バックログですか？" |
+| Sprint (if Active sprint exists) | "Should this task go into the sprint or the backlog?" |
 
 ### How to Choose Executor
 
@@ -161,12 +161,12 @@ Present options and recommended reasons to the user and let them decide.
 
 In AskUserQuestion, include a description with each option explaining why it is recommended.
 
-### 環境別の推奨
+### Environment-Specific Recommendations
 
-- `execution_environment = "cowork"` の場合: AI 実行タスクは `cowork` を推奨。
-  `claude-code` も選択可能だが、実行には別途 Claude Code 環境が必要と案内する。
-- `execution_environment = "claude-code"` の場合: AI 実行タスクは `claude-code` を推奨。
-  `cowork` も選択可能だが、実行には Cowork 環境が必要と案内する。
+- When `execution_environment = "cowork"`: Recommend `cowork` for AI-executed tasks.
+  `claude-code` is also selectable, but inform the user that a separate Claude Code environment is required.
+- When `execution_environment = "claude-code"`: Recommend `claude-code` for AI-executed tasks.
+  `cowork` is also selectable, but inform the user that a Cowork environment is required.
 
 ### Branch (git worktree support)
 
@@ -183,13 +183,13 @@ For tasks with Executor=claude-code where the target is a git repository:
 
 ## Human → Agent Re-assignment
 
-ユーザーが Executor=human のタスクを Agent に変更したい場合:
-- AskUserQuestion: "「{task title}」をAgentに実行させますか？ [claude-code / cowork / このままhuman]"
-- claude-code or cowork 選択時:
-  1. Working Directory を確認（required）
-  2. Branch を確認（optional）
-  3. Executor, Working Directory, Branch を更新
-  4. View Server にデータ push
+When the user wants to change an Executor=human task to an agent:
+- AskUserQuestion: "Execute '{task title}' with an agent? [claude-code / cowork / keep human]"
+- When claude-code or cowork is selected:
+  1. Confirm Working Directory (required)
+  2. Confirm Branch (optional)
+  3. Update Executor, Working Directory, Branch
+  4. Push data to the View Server
 
 ## Bulk Operations
 

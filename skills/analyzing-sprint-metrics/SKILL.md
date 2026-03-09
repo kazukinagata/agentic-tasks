@@ -3,8 +3,7 @@ name: analyzing-sprint-metrics
 description: >
   Analyzes sprint performance metrics and generates retrospective insights
   from task data. Produces throughput, agent performance, and dependency reports.
-  Triggers on: "sprint metrics", "retrospective", "retro", "agent performance",
-  "振り返り", "メトリクス", "レトロ", "パフォーマンス分析".
+  Triggers on: "sprint metrics", "retrospective", "retro", "agent performance".
 ---
 
 # Headless Tasks — Sprint Metrics
@@ -20,7 +19,7 @@ If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up 
 ## Step 1: Identify Target Sprint
 
 If the user specified a sprint name, find it in `headless_config.sprintsDatabaseId`.
-Otherwise, use AskUserQuestion: "どのスプリントのメトリクスを表示しますか？（省略時: 最新の Closed スプリント）"
+Otherwise, use AskUserQuestion: "Which sprint's metrics would you like to view? (Default: latest Closed sprint)"
 If no Closed sprint exists, use the most recent Completed sprint.
 
 ## Step 2: Fetch Sprint and Task Data
@@ -44,7 +43,7 @@ If no Closed sprint exists, use the most recent Completed sprint.
 - **Error rate**: tasks with Error Message not empty / total dispatched
 - **Human intervention**: tasks where Agent Output or Error Message mentions "manual", "retry", "human" or Status went Blocked→In Progress
 - **Avg cycle time**: for Done tasks with Dispatched At set, estimate from daily Metrics snapshots
-  - If no snapshot data, note "Dispatched At データから推定不可"
+  - If no snapshot data, note "Cannot estimate from Dispatched At data"
 
 ### Dependency Analysis
 - Blocked tasks at sprint start: tasks with non-empty Blocked By at sprint creation
@@ -79,13 +78,13 @@ RECOMMENDATIONS:
 ### Recommendation Rules
 
 Generate recommendations automatically:
-- If any task's actual cycle time > Score × (stallThresholdMultiplier × 1.5): "Score 推定が低すぎた可能性 — <task name>"
-- If stall rate > 30%: "ストール率が高い (>30%) — maxConcurrentAgents を減らすか、タスクのスコープを縮小を検討"
-- If stall rate < 10%: "ストール率が良好 (<10%) — maxConcurrentAgents を増やせる可能性あり"
-- If blocked tasks > 40% of sprint: "依存チェーンがボトルネック — スプリント計画時に依存解消タスクを先行させる"
-- If error rate > 20%: "エラー率が高い — Execution Plan の品質向上か、タスク分割を検討"
-- If completion rate < 60%: "完了率が低い — 次スプリントのバッチサイズを縮小することを検討"
-- If completion rate > 90%: "完了率が優秀 — 次スプリントのバッチサイズを増やせる可能性あり"
+- If any task's actual cycle time > Score × (stallThresholdMultiplier × 1.5): "Score estimate may have been too low — <task name>"
+- If stall rate > 30%: "High stall rate (>30%) — consider reducing maxConcurrentAgents or narrowing task scope"
+- If stall rate < 10%: "Good stall rate (<10%) — maxConcurrentAgents could potentially be increased"
+- If blocked tasks > 40% of sprint: "Dependency chains are a bottleneck — prioritize dependency-resolving tasks during sprint planning"
+- If error rate > 20%: "High error rate — consider improving Execution Plan quality or splitting tasks"
+- If completion rate < 60%: "Low completion rate — consider reducing batch size for the next sprint"
+- If completion rate > 90%: "Excellent completion rate — batch size could potentially be increased for the next sprint"
 
 ## Step 5: Write to Sprint Metrics Field
 

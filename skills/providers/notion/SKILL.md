@@ -94,8 +94,8 @@ When referring to a task in dispatch prompts and completion instructions, use:
 - **Task ID**: the Notion page ID (from the `id` field when the task was created)
 - **Update instruction**: "Use `notion-update-page` with page ID `<Page ID>` to write results to Agent Output and update Status."
 
-Cowork 環境では dispatch prompt は Scheduled Task の prompt として設定される。
-Notion MCP ツール（notion-update-page）は両環境で利用可能。
+In the Cowork environment, the dispatch prompt is set as the Scheduled Task's prompt.
+Notion MCP tools (notion-update-page) are available in both environments.
 
 ## Pushing Data to View Server
 

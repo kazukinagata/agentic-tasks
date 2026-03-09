@@ -3,8 +3,7 @@ name: setting-up-scrum
 description: >
   Provisions the Sprints database and extends the Tasks DB with sprint-related
   fields (Sprint relation, Complexity Score, Backlog Order). Idempotent and opt-in.
-  Triggers on: "set up scrum", "enable scrum", "add scrum", "set up sprints",
-  "スクラムをセットアップ", "スプリントを使いたい", "バッチ実行したい".
+  Triggers on: "set up scrum", "enable scrum", "add scrum", "set up sprints".
 ---
 
 # Headless Tasks — Scrum Setup
@@ -20,7 +19,7 @@ If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up 
 ## Idempotency Check
 
 Before doing anything, check if `headless_config.sprintsDatabaseId` already exists.
-If it does, report "Scrum は既に設定済みです（sprintsDatabaseId: <ID>）" and exit.
+If it does, report "Scrum is already set up (sprintsDatabaseId: <ID>)" and exit.
 
 ## Step 1: Create Sprints (Objectives) DB
 
@@ -60,8 +59,8 @@ This creates a `Sprint` column on Tasks that points to the Sprints DB, and a bac
 ADD COLUMN "Complexity Score" NUMBER
 ```
 
-Complexity Score の計算ロジックは managing-tasks の "Backlog → Ready: Complexity Score Calculation" セクション、
-または `skills/setting-up-scrum/scripts/calc-complexity.py` を参照。
+For the Complexity Score calculation logic, refer to the "Backlog → Ready: Complexity Score Calculation" section in managing-tasks,
+or see `skills/setting-up-scrum/scripts/calc-complexity.py`.
 
 ## Step 4: Add Backlog Order to Tasks DB
 
@@ -92,23 +91,23 @@ Use `notion-update-page` to overwrite the code block content.
 Output a summary:
 
 ```
-Scrum セットアップ完了
+Scrum setup complete
 
-作成したデータベース:
+Created database:
   Sprints DB: <SPRINTS_DB_ID>
 
-Tasks DB に追加したフィールド:
+Fields added to Tasks DB:
   - Sprint (relation → Sprints)
   - Complexity Score (number)
   - Backlog Order (number)
 
-Config 更新:
+Config updated:
   - sprintsDatabaseId: <ID>
   - maxConcurrentAgents: 3
 
-次のステップ:
-  - "start sprint" でスプリント計画を開始
-  - "show backlog" でバックログを確認
+Next steps:
+  - Run "start sprint" to begin sprint planning
+  - Run "show backlog" to view the backlog
 ```
 
 ## Language

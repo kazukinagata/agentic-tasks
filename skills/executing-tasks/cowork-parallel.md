@@ -1,6 +1,6 @@
 # Cowork Scheduled Task Parallel Flow (Cowork only)
 
-Loaded when the user chooses "Cowork Scheduled Task 並列作成" in executing-tasks.
+Loaded when the user chooses "Cowork Scheduled Task parallel creation" in executing-tasks.
 
 ## Step 1: Dispatch Prompt Generation
 
@@ -27,10 +27,10 @@ Write `cowork:<taskId>` to the Notion task's Session Reference field.
 ## Step 5: Report
 
 ```
-N件の Cowork Scheduled Task を作成しました:
+Created N Cowork Scheduled Tasks:
 - ht-abc12345 → Feature Login
 - ht-def67890 → API Tests
 
-Cowork の Scheduled Tasks 画面から各タスクを実行してください。
-完了状況の確認: /viewing-my-tasks
+Run each task from the Cowork Scheduled Tasks screen.
+Check completion status: /viewing-my-tasks
 ```

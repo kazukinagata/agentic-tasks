@@ -7,7 +7,7 @@ description: >
   "sprint planning", "end sprint", "close sprint", "sprint status",
   "what's in this sprint", "show sprint", "sprint backlog", "add to sprint",
   "show backlog", "product backlog", "reorder backlog", "reprioritize",
-  "backlog order", "スプリント", "バックログ", "スプリント計画", "バックログ管理".
+  "backlog order".
 ---
 
 # Headless Tasks — Sprint Management
@@ -24,21 +24,21 @@ If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up 
 
 ## Action: Start Sprint / Sprint Planning
 
-**Triggered by**: "start sprint", "plan sprint", "new sprint", "sprint planning", "スプリント計画"
+**Triggered by**: "start sprint", "plan sprint", "new sprint", "sprint planning"
 
 ### Step 1: Guard
 
 Fetch all sprints from `headless_config.sprintsDatabaseId`. If any sprint has Status = "Active", report:
 ```
-現在アクティブなスプリントが存在します: <Sprint Name>
-新しいスプリントを開始する前に、現在のスプリントを終了してください ("end sprint")
+An active sprint already exists: <Sprint Name>
+Please end the current sprint before starting a new one ("end sprint")
 ```
 
 ### Step 2: Gather Sprint Info
 
 Use AskUserQuestion to ask:
-- **Goal** (必須): このスプリントの目標・完了条件を記述してください
-- **Max Concurrent Agents** (省略可、省略時は `headless_config.maxConcurrentAgents` を使用): 並列実行上限
+- **Goal** (required): Describe the sprint goal and completion criteria
+- **Max Concurrent Agents** (optional, defaults to `headless_config.maxConcurrentAgents`): Maximum parallel execution limit
 
 ### Step 3: Analyze Backlog
 
@@ -56,26 +56,26 @@ Within each group, sort by: Priority (Urgent > High > Medium > Low) then Complex
 Present the analysis to the user:
 
 ```
-[バッチ提案] Goal: <Goal Text>
+[Batch Proposal] Goal: <Goal Text>
 
-提案する実行バッチ（並列実行上限: <N>）:
+Proposed execution batch (max parallel agents: <N>):
 
-  優先グループ A（依存なし、即時実行可）:
+  Priority Group A (no dependencies, immediately executable):
     1. <Task Title>   [<Priority> / Score:<N>] [<Executor>]
     2. <Task Title>   [<Priority> / Score:<N>] [<Executor>]
 
-  優先グループ B（A完了後に実行可）:
-    3. <Task Title>   [<Priority> / Score:<N>] [<Executor>]  ← Blocked by #1
+  Priority Group B (executable after A completes):
+    3. <Task Title>   [<Priority> / Score:<N>] [<Executor>]  <- Blocked by #1
 
-グループ A の合計 Complexity Score: <N>
-全体の合計 Complexity Score: <N>
+Group A total Complexity Score: <N>
+Overall total Complexity Score: <N>
 
-「このバッチで進めますか？変更があれば "3を外して5を追加" 等と伝えてください。」
+"Proceed with this batch? If changes are needed, say something like 'remove #3 and add #5'."
 ```
 
 ### Step 5: Apply Human Approval / Modifications
 
-Accept modifications like "Nを外して" / "Mを追加" and update the proposed list.
+Accept modifications like "remove #N" / "add #M" and update the proposed list.
 When approved:
 
 1. Create the Sprint page in the Sprints DB via `notion-create-pages`:
@@ -90,16 +90,16 @@ When approved:
 
 4. Report:
 ```
-スプリント開始: <Sprint Name>
-アクティブタスク: <N> tasks (Complexity Score: <N>)
-view server: http://localhost:3456/sprint-backlog.html
+Sprint started: <Sprint Name>
+Active tasks: <N> tasks (Complexity Score: <N>)
+View server: http://localhost:3456/sprint-backlog.html
 ```
 
 ---
 
 ## Action: Sprint Status
 
-**Triggered by**: "sprint status", "what's in this sprint", "show sprint", "スプリント状況"
+**Triggered by**: "sprint status", "what's in this sprint", "show sprint"
 
 1. Find the Active sprint from `headless_config.sprintsDatabaseId`
 2. Fetch all tasks with Sprint = <Active Sprint ID>
@@ -110,15 +110,15 @@ Display:
 Active Sprint: <Sprint Name>
 Goal: <Goal Text>
 
-実行状況:
+Progress:
   Done:        <bar>  <N> tasks (Score:<N>)
   In Progress: <bar>  <N> tasks (Score:<N>)   [Session: <refs>]
   Ready:       <bar>  <N> tasks (Score:<N>)
   Backlog:     <bar>  <N> tasks (Score:<N>)
   Blocked:     <bar>  <N> tasks
-  STALLED:     <bar>  <N> tasks (Dispatched Xh ago — タイムアウト検討)
+  STALLED:     <bar>  <N> tasks (Dispatched Xh ago — consider timeout)
 
-完了率: <Done Score> / <Total Score> Complexity Score (<N>%)
+Completion: <Done Score> / <Total Score> Complexity Score (<N>%)
 ```
 
 Flag STALLED tasks (In Progress with Dispatched At > Score × stallThresholdMultiplier hours ago) with yellow/red text.
@@ -127,7 +127,7 @@ Flag STALLED tasks (In Progress with Dispatched At > Score × stallThresholdMult
 
 ## Action: Show Backlog / Product Backlog
 
-**Triggered by**: "show backlog", "product backlog", "バックログ表示", "バックログ一覧"
+**Triggered by**: "show backlog", "product backlog"
 
 1. Fetch tasks where Sprint = empty AND Status in [Backlog, Ready]
 2. Build topological sort by Blocked By chains
@@ -151,7 +151,7 @@ Flag STALLED tasks (In Progress with Dispatched At > Score × stallThresholdMult
 
 ## Action: Suggest Backlog Order
 
-**Triggered by**: "suggest backlog order", "バックログ順序を提案", "reorder backlog", "reprioritize"
+**Triggered by**: "suggest backlog order", "reorder backlog", "reprioritize"
 
 1. Fetch all backlog tasks (Sprint = empty)
 2. Compute optimal order:
@@ -165,7 +165,7 @@ Flag STALLED tasks (In Progress with Dispatched At > Score × stallThresholdMult
 
 ## Action: Move Task in Backlog
 
-**Triggered by**: "タスクXをタスクYの上に移動", "move task X before Y", "バックログ順序変更"
+**Triggered by**: "move task X before Y"
 
 1. Identify tasks X and Y
 2. Set X's Backlog Order = Y's Backlog Order - 500
@@ -176,7 +176,7 @@ Flag STALLED tasks (In Progress with Dispatched At > Score × stallThresholdMult
 
 ## Action: Add Task to Sprint
 
-**Triggered by**: "add to sprint", "スプリントに追加", "このタスクをスプリントへ"
+**Triggered by**: "add to sprint"
 
 1. Identify the task and Active sprint
 2. Set the task's Sprint field to the Active sprint
@@ -186,8 +186,8 @@ Flag STALLED tasks (In Progress with Dispatched At > Score × stallThresholdMult
 
 ## "Next Task"
 
-"what should I do next?" や "next task" には `/managing-tasks` を案内する。
-Sprint-aware な Next Task ロジックは managing-tasks に統一されている。
+For "what should I do next?" or "next task", direct the user to `/managing-tasks`.
+Sprint-aware Next Task logic is consolidated in the managing-tasks skill.
 
 ---
 
@@ -213,7 +213,7 @@ Each sprint object:
 {
   "id": "...",
   "name": "Sprint 1",
-  "goal": "OAuth 実装と API レート制限",
+  "goal": "Implement OAuth and API rate limiting",
   "status": "Active",
   "maxConcurrentAgents": 3,
   "velocity": null,

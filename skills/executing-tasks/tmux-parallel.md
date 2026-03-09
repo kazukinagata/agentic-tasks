@@ -1,6 +1,6 @@
 # tmux Parallel Execution Flow (Claude Code only)
 
-Phases 3–6 of the executing-tasks skill. Loaded when the user chooses "tmux 並列実行".
+Phases 3–6 of the executing-tasks skill. Loaded when the user chooses "tmux parallel execution".
 
 ## Phase 3: Prepare Files
 
@@ -88,7 +88,7 @@ If the script exits with code 1 (tmux not installed), fall back to sequential Ag
 After pane creation, if running outside tmux, try to auto-open a terminal window:
 
 ```bash
-# tmux 外の場合のみ自動ターミナル起動を試行
+# Auto-open terminal only when running outside tmux
 if [ -z "${TMUX:-}" ]; then
   bash ${CLAUDE_PLUGIN_ROOT}/skills/executing-tasks/scripts/open-terminal.sh "$SESSION" || true
 fi
@@ -104,16 +104,16 @@ After each pane is created successfully, set pane titles and write Session Refer
 Report to the user:
 
 ```
-N件のタスクを並列実行中です:
+Running N tasks in parallel:
 - headless-tasks-<ts>:0.0 → Feature Login
 - headless-tasks-<ts>:0.1 → API Tests
 - headless-tasks-<ts>:0.2 → Fix Bug #42
 
-モニタリング:
-  tmux attach -t headless-tasks-<ts>         （tmux 外から）
-  tmux switch-client -t headless-tasks-<ts>  （tmux 内から）
+Monitoring:
+  tmux attach -t headless-tasks-<ts>         (from outside tmux)
+  tmux switch-client -t headless-tasks-<ts>  (from inside tmux)
 
-完了状況の確認: /viewing-my-tasks  または  ls /tmp/headless-tasks/headless-tasks-<ts>/
+Check completion status: /viewing-my-tasks  or  ls /tmp/headless-tasks/headless-tasks-<ts>/
 ```
 
 The Orchestrator exits here. Each Sub-Agent runs independently and handles its own completion.

@@ -3,14 +3,13 @@ name: viewing-my-tasks
 description: >
   Displays tasks assigned to the current user, grouped by status. Shows sprint
   context and suggests next actions (execute, manage, delegate).
-  Triggers on: "my tasks", "自分のタスク", "assigned to me", "今日のタスク",
-  "show my tasks", "what are my tasks", "自分担当", "自分のタスクを見せて"
+  Triggers on: "my tasks", "assigned to me", "show my tasks", "what are my tasks"
 user-invocable: true
 ---
 
 # Headless Tasks — My Tasks
 
-自分が担当 (Assignees に自分が含まれる) タスクを一覧表示する。
+Lists all tasks assigned to the current user (where Assignees contains the user).
 
 ## Step 1: Provider Detection + Identity Resolve
 
@@ -31,7 +30,7 @@ Group tasks by Status and display in the following order:
 ### In Progress
 For each task, show:
 - Title, Priority
-- Executor / Session Reference（存在する場合はそのまま表示: tmux セッション名でも cowork:xxx でも）
+- Executor / Session Reference (display as-is if present: whether tmux session name or cowork:xxx)
 - `Dispatched At` (if set)
 
 ### Ready
@@ -56,13 +55,13 @@ If `sprintsDatabaseId` is in config and an Active Sprint exists:
 
 ## Step 4: Next Actions
 
-タスク一覧表示後、次のアクションを案内する:
+After displaying the task list, suggest next actions:
 
 ```
-次のアクション:
-- タスクを実行: /executing-tasks
-- タスクを管理（再割り当て・ステータス変更等）: /managing-tasks
-- タスクを委譲: /delegating-tasks
+Next actions:
+- Execute tasks: /executing-tasks
+- Manage tasks (reassign, change status, etc.): /managing-tasks
+- Delegate tasks: /delegating-tasks
 ```
 
 ## Language

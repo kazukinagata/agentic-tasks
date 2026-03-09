@@ -3,8 +3,8 @@ name: running-standup
 description: >
   Generates an automated sprint status report with stall detection and blocked
   task analysis. Replaces human standup format with quantitative metrics.
-  Triggers on: "standup", "status report", "agent status", "スタンドアップ",
-  "進捗確認", "burn down", "stalled tasks", "タイムアウト確認".
+  Triggers on: "standup", "status report", "agent status",
+  "burn down", "stalled tasks".
 ---
 
 # Headless Tasks — Sprint Standup
@@ -20,7 +20,7 @@ If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up 
 ## Step 1: Find Active Sprint
 
 Fetch all sprints from `headless_config.sprintsDatabaseId`. Find the one with Status = "Active".
-If none, report "アクティブなスプリントはありません" and exit.
+If none, report "No active sprint found" and exit.
 
 ## Step 2: Fetch Sprint Tasks
 
@@ -55,9 +55,9 @@ RUNNING (In Progress):
 COMPLETED (since last report):
   - <Task Title>     [Done] [Agent Output: <brief summary>]
 
-STALLED (要確認):
+STALLED (needs attention):
   - <Task Title>     [In Progress] [Dispatched <N>h ago — expected ~Score:<N> = ~<N>h]
-    → セッション <Session Reference> を確認してください
+    → Check session <Session Reference>
 
 BLOCKED:
   - <Task Title>     [Blocked by: <Dependency Title>]
@@ -89,15 +89,15 @@ A task is "stalled" when:
 
 Recommend actions for stalled tasks:
 
-**Claude Code 環境:**
-- tmux セッション確認: `tmux has-session -t <session-ref> 2>/dev/null`
-- セッションが死んでいれば stalled と判定
+**Claude Code environment:**
+- Check tmux session: `tmux has-session -t <session-ref> 2>/dev/null`
+- If the session is dead, mark as stalled
 
-**Cowork 環境:**
-- `mcp__scheduled-tasks__list_scheduled_tasks` で該当タスクの状態を確認
-- Session Reference の `cowork:<taskId>` から taskId を抽出して検索
+**Cowork environment:**
+- Check the task status via `mcp__scheduled-tasks__list_scheduled_tasks`
+- Extract taskId from Session Reference `cowork:<taskId>` and search
 
-**共通:**
+**Common:**
 - Consider restarting the task
 - Consider reducing scope (split into smaller tasks)
 

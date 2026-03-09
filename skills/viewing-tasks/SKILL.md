@@ -3,9 +3,8 @@ name: viewing-tasks
 description: >
   Manages the local view server that renders task data as interactive HTML pages
   (Kanban, List, Calendar, Gantt). Starts the server, pushes data, and opens views.
-  Triggers on: "カンバン", "kanban", "リスト", "list view", "タスクを見せて",
-  "show tasks", "ビュー", "view", "可視化", "visualize",
-  "ガントチャート", "gantt", "カレンダー", "calendar".
+  Triggers on: "kanban", "list view", "show tasks", "view", "visualize",
+  "gantt", "calendar".
 ---
 
 # Headless Tasks — View Server

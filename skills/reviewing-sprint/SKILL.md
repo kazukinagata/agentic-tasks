@@ -3,8 +3,7 @@ name: reviewing-sprint
 description: >
   Generates an automated batch completion summary and closes the active sprint.
   Reviews done/undone tasks, calculates velocity, and handles unfinished task disposition.
-  Triggers on: "sprint review", "batch complete", "end sprint", "close sprint",
-  "スプリント完了", "バッチ終了", "スプリントを終了", "スプリントを閉じる".
+  Triggers on: "sprint review", "batch complete", "end sprint", "close sprint".
 ---
 
 # Headless Tasks — Sprint Review
@@ -20,7 +19,7 @@ If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up 
 ## Step 1: Find Active Sprint
 
 Fetch all sprints from `headless_config.sprintsDatabaseId`. Find the one with Status = "Active".
-If none, report "アクティブなスプリントはありません" and exit.
+If none, report "No active sprint found" and exit.
 
 ## Step 2: Fetch Sprint Tasks
 
@@ -33,10 +32,10 @@ Categorize tasks:
 - **NOT DONE**: Status ≠ "Done"
 
 For NOT DONE tasks, analyze dispositions:
-- If Blocked By task is now Done → "依存解消済み → 次スプリントに持ち越し可能"
-- If Status = "In Progress" → "実行中 → スプリントを延長するか次スプリントへ"
-- If Status = "Backlog"/"Ready" → "未着手 → 次スプリントかバックログに戻す"
-- If Status = "Blocked" + Error → "エラーでブロック → 要調査"
+- If Blocked By task is now Done → "Dependency resolved → can carry over to next sprint"
+- If Status = "In Progress" → "In progress → extend sprint or move to next sprint"
+- If Status = "Backlog"/"Ready" → "Not started → move to next sprint or return to backlog"
+- If Status = "Blocked" + Error → "Blocked by error → needs investigation"
 
 Display:
 ```
@@ -56,8 +55,8 @@ Sprint Metrics:
   Error rate: <tasks with Error Message not empty> / <total dispatched>
   Avg cycle time: ~<hours> per task
 
-未完了タスクの処置:
-  "<Task Title>" → 次スプリントに持ち越しますか？バックログに戻しますか？
+Unfinished task disposition:
+  "<Task Title>" → Carry over to next sprint? Or return to backlog?
 ```
 
 ## Step 4: Ask for Disposition of Unfinished Tasks
@@ -65,16 +64,16 @@ Sprint Metrics:
 Use AskUserQuestion for each NOT DONE task (or batch them):
 
 Options:
-- 次スプリントに持ち越す (keep Sprint relation, will be included in next batch)
-- バックログに戻す (clear Sprint relation)
-- このまま放置する (leave as-is)
+- Carry over to next sprint (keep Sprint relation, will be included in next batch)
+- Return to backlog (clear Sprint relation)
+- Leave as-is (no change)
 
 ## Step 5: Apply Dispositions
 
 For each NOT DONE task based on the user's choice:
-- "次スプリントに持ち越す" → clear the Sprint field (will be assigned to next sprint during planning)
-- "バックログに戻す" → clear Sprint field, set Status = "Backlog" if it was Ready/Blocked
-- "このまま" → no change
+- "Carry over to next sprint" → clear the Sprint field (will be assigned to next sprint during planning)
+- "Return to backlog" → clear Sprint field, set Status = "Backlog" if it was Ready/Blocked
+- "Leave as-is" → no change
 
 ## Step 6: Finalize Sprint
 
@@ -101,12 +100,12 @@ curl -s http://localhost:3456/api/health -o /dev/null 2>/dev/null && {
 ## Step 8: Completion Report
 
 ```
-スプリント完了: <Sprint Name>
+Sprint completed: <Sprint Name>
 Velocity: <N> Complexity Score (<Done tasks>/<Total tasks> tasks completed)
 
-次のステップ:
-  - "retro" でスプリントメトリクスを詳細分析
-  - "start sprint" で次のスプリントを開始
+Next steps:
+  - Run "retro" for detailed sprint metrics analysis
+  - Run "start sprint" to begin the next sprint
 ```
 
 ## Language

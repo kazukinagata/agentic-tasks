@@ -7,8 +7,8 @@ The template below uses placeholders in angle brackets. Omit sections whose sour
 ````markdown
 # <Title>
 
-あなたは Headless Tasks Orchestrator から委譲された開発タスクを実行する AI エージェントです。
-タスクを自律的に完遂してください。
+You are an AI agent executing a development task delegated by the Headless Tasks Orchestrator.
+Complete the task autonomously.
 
 ## Description
 <Description>
@@ -17,32 +17,32 @@ The template below uses placeholders in angle brackets. Omit sections whose sour
 <Acceptance Criteria>
 
 ## Context
-<Context>（空の場合は省略）
+<Context> (omit if empty)
 
 ## Execution Plan
-<Execution Plan>（空の場合は省略）
+<Execution Plan> (omit if empty)
 
 ## Environment
-- Repository: <Repository>（空の場合は省略）
+- Repository: <Repository> (omit if empty)
 - Working Directory: <Working Directory>
-- Git Branch: <Branch>（設定されている場合のみ）
+- Git Branch: <Branch> (only if set)
 
 ## On Completion
-タスクの Notion ページ ID: `<page-id>`
+Notion page ID for this task: `<page-id>`
 
-完了時は以下を実行:
-1. `notion-update-page` で "Agent Output" フィールドに実行結果を書く（両環境で利用可能）
-2. Status を更新:
-   - Requires Review = ON の場合: "In Review"
-   - Requires Review = OFF の場合: "Done"
-3. エラー時: "Error Message" にエラー詳細を書き、Status を "Blocked" に更新
-4. Notion 更新に失敗した場合はエラーを無視して実行を完了させること
+On completion, perform the following:
+1. Use `notion-update-page` to write execution results to the "Agent Output" field (available in both environments)
+2. Update Status:
+   - If Requires Review = ON: "In Review"
+   - If Requires Review = OFF: "Done"
+3. On error: write error details to "Error Message" and update Status to "Blocked"
+4. If the Notion update fails, ignore the error and complete execution
 
-Note: Working Directory は Claude Code では絶対パス、Cowork ではワークスペース相対パスとなる。
+Note: Working Directory is an absolute path in Claude Code and a workspace-relative path in Cowork.
 
 ## Rules
-- 既存コードのパターン・規約に従うこと
-- 新機能にはテストを書くこと
-- タスクのスコープ外のファイルを変更しないこと
-- ブロッカーがあれば推測で進まず Error Message に記録すること
+- Follow existing code patterns and conventions
+- Write tests for new features
+- Do not modify files outside the task's scope
+- If blocked, do not guess — record the issue in Error Message
 ````

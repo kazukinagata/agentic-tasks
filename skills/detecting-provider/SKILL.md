@@ -34,40 +34,40 @@ If no provider MCP is found at all, inform the user they need to run the **setti
 
 ## Environment Detection
 
-Provider 検出後、実行環境も判定し `execution_environment` を会話コンテキスト変数に設定する。
+After detecting the provider, also determine the execution environment and set `execution_environment` as a conversation context variable.
 **Skip if already set in this conversation.**
 
-判定ロジック:
-1. 環境変数 `CLAUDE_CODE_IS_COWORK` が `1` → `execution_environment = "cowork"`
-2. それ以外 → `execution_environment = "claude-code"`
+Detection logic:
+1. If environment variable `CLAUDE_CODE_IS_COWORK` is `1` → `execution_environment = "cowork"`
+2. Otherwise → `execution_environment = "claude-code"`
 
-（`CLAUDECODE=1` は両環境で共通のため判定には使わない）
+(`CLAUDECODE=1` is common to both environments, so it is not used for detection.)
 
-この値は downstream スキル（executing-tasks, managing-tasks 等）で実行フロー分岐に使用する。
+This value is used by downstream skills (executing-tasks, managing-tasks, etc.) for execution flow branching.
 
 ## Config Retrieval
 
-Provider 検出後、Config ページからデータベース ID と定数を取得する。
+After detecting the provider, retrieve database IDs and constants from the Config page.
 **Skip if `headless_config` is already set in this conversation.**
 
 ### Notion Provider
 
-1. `notion-search` で "Headless Tasks Config" ページを検索
-2. `notion-fetch` でページ本文を取得
-3. JSON コードブロックをパースし、以下を `headless_config` セッション変数に設定:
+1. Search for the "Headless Tasks Config" page using `notion-search`
+2. Retrieve the page body using `notion-fetch`
+3. Parse the JSON code block and set the following as the `headless_config` session variable:
    - `tasksDatabaseId` (required)
    - `teamsDatabaseId` (optional)
    - `projectsDatabaseId` (optional)
-   - `sprintsDatabaseId` (optional — setting-up-scrum 後に存在)
+   - `sprintsDatabaseId` (optional — exists after setting-up-scrum)
    - `maxConcurrentAgents` (optional — default: 3)
 
-Config ページが見つからない場合、ユーザーに setting-up-tasks スキルの実行を案内して停止する。
+If the Config page is not found, instruct the user to run the setting-up-tasks skill, then stop.
 
 ## Constants
 
-スキル間で共有される定数。detecting-provider を経由する全スキルがこの値を参照する。
+Constants shared across skills. All skills that go through detecting-provider reference these values.
 
-| 定数名 | 値 | 用途 |
+| Constant | Value | Purpose |
 |--------|-----|------|
-| `stallThresholdMultiplier` | 4 | Stall 判定: elapsed hours > Complexity Score × この値 |
-| `stallDefaultHours` | 24 | Complexity Score が未設定の場合のデフォルト Stall 閾値（時間） |
+| `stallThresholdMultiplier` | 4 | Stall detection: elapsed hours > Complexity Score × this value |
+| `stallDefaultHours` | 24 | Default stall threshold (hours) when Complexity Score is not set |

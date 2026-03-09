@@ -3,14 +3,13 @@ name: delegating-tasks
 description: >
   Delegates a task to another organization member by updating Assignees,
   resetting executor fields, and recording delegation history in Context.
-  Triggers on: "delegate task", "assign to", "タスクを渡す", "〇〇さんに任せて",
-  "transfer task", "reassign", "委譲", "担当を変えて", "別の人に渡して"
+  Triggers on: "delegate task", "assign to", "transfer task", "reassign"
 user-invocable: true
 ---
 
 # Headless Tasks — Task Delegate
 
-タスクを別の組織メンバーに委譲する。Assignees を受取人に変更し、委譲履歴を Context に追記する。
+Delegates a task to another organization member. Changes Assignees to the recipient and appends delegation history to Context.
 
 ## Step 1: Provider Detection + Identity Resolve
 
@@ -31,7 +30,7 @@ If the user did not specify a task clearly:
 2. Run member lookup with the recipient name/email the user provided.
 3. Handle results:
    - 0 matches → inform the user and ask for a different name or email.
-   - 1 match → confirm: "「{recipient.name}」に委譲してよいですか？"
+   - 1 match → confirm: "Delegate to {recipient.name}?"
    - 2–5 matches → present the list and ask the user to select one.
 
 ## Step 4: Update the Task
@@ -40,21 +39,21 @@ Apply the following field updates (other fields remain unchanged):
 
 | Field | Value | Reason |
 |---|---|---|
-| `Assignees` | `[recipient]` | 委譲先を責任者にする |
-| `Executor` | `human` | 受取人が自分で判断する（強制固定） |
-| `Working Directory` | 空欄にリセット | 受取人のFSは不明 |
-| `Branch` | 空欄にリセット | 受取人のgit環境は不明 |
-| `Session Reference` | 空欄にリセット | 受取人のAgentが記録する |
-| `Dispatched At` | 空欄にリセット | 受取人のAgentが記録する |
-| `Requires Review` | unchecked にリセット | 受取人が判断する |
-| `Context` | 既存テキストに追記 | 委譲履歴を残す |
+| `Assignees` | `[recipient]` | Set the recipient as the responsible person |
+| `Executor` | `human` | Recipient decides on their own (forced fixed) |
+| `Working Directory` | Reset to empty | Recipient's filesystem is unknown |
+| `Branch` | Reset to empty | Recipient's git environment is unknown |
+| `Session Reference` | Reset to empty | Recipient's agent will record this |
+| `Dispatched At` | Reset to empty | Recipient's agent will record this |
+| `Requires Review` | Reset to unchecked | Recipient decides |
+| `Context` | Append to existing text | Preserve delegation history |
 
-`Context` フィールドへの追記フォーマット:
+Append format for the `Context` field:
 ```
 Delegated from @{current_user.name} to @{recipient.name} on {YYYY-MM-DD}
 ```
 
-(任意) ユーザーに確認して Status を `Backlog` にリセットする（再トリアージを示唆）。
+(Optional) Confirm with the user and reset Status to `Backlog` (suggests re-triage).
 
 ## Step 5: Push to View Server
 
@@ -64,23 +63,23 @@ After updating the task, push fresh data to the view server as described in the 
 
 Report:
 ```
-委譲完了: 「{task title}」→ @{recipient.name}
-Context に委譲履歴を追記しました。
-受取人が viewing-my-tasks を実行すると、このタスクが表示されます。
+Delegation complete: "{task title}" → @{recipient.name}
+Delegation history has been appended to Context.
+The recipient will see this task when they run viewing-my-tasks.
 ```
 
 ## Field Constraints for Delegated Tasks
 
-**他人を担当者にする場合は以下のフィールドは設定しない**（受取人が判断する）:
+**Do not set the following fields when assigning to another person** (the recipient decides):
 
-| フィールド | 理由 |
+| Field | Reason |
 |---|---|
-| `Executor` | human 固定（受取人が変更する） |
-| `Working Directory` | 受取人のFS情報は不明 |
-| `Branch` | 受取人のgit環境は不明 |
-| `Session Reference` | 受取人のAgentが記録する |
-| `Dispatched At` | 受取人のAgentが記録する |
-| `Requires Review` | 受取人が判断する |
+| `Executor` | Fixed to human (recipient will change if needed) |
+| `Working Directory` | Recipient's filesystem info is unknown |
+| `Branch` | Recipient's git environment is unknown |
+| `Session Reference` | Recipient's agent will record this |
+| `Dispatched At` | Recipient's agent will record this |
+| `Requires Review` | Recipient decides |
 
 ## Language
 
