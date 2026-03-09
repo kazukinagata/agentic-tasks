@@ -61,7 +61,7 @@ ADD COLUMN "Complexity Score" NUMBER
 ```
 
 Complexity Score の計算ロジックは managing-tasks の "Backlog → Ready: Complexity Score Calculation" セクション、
-または `scripts/calc-complexity.py` を参照。
+または `skills/setting-up-scrum/scripts/calc-complexity.py` を参照。
 
 ## Step 4: Add Backlog Order to Tasks DB
 

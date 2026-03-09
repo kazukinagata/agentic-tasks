@@ -89,9 +89,13 @@ For each NOT DONE task based on the user's choice:
 ## Step 7: Push Updates to View Server
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/skills/scripts/push-view-data.sh \
-  --tasks '<tasks_json>' \
-  --sprints '<sprints_json>'
+# Silently skip if server is not running
+curl -s http://localhost:3456/api/health -o /dev/null 2>/dev/null && {
+  curl -s -X POST http://localhost:3456/api/data \
+    -H "Content-Type: application/json" -d '<tasks_json>' -o /dev/null 2>/dev/null
+  curl -s -X POST http://localhost:3456/api/sprint-data \
+    -H "Content-Type: application/json" -d '<sprints_json>' -o /dev/null 2>/dev/null
+} || true
 ```
 
 ## Step 8: Completion Report

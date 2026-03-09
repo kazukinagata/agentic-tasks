@@ -109,10 +109,11 @@ After any task operation (create, update, delete), push fresh data to the local 
 3. POST to `http://localhost:3456/api/data` with `Content-Type: application/json`
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/skills/scripts/push-view-data.sh --tasks '<json>'
+# Silently skip if server is not running
+curl -s http://localhost:3456/api/health -o /dev/null 2>/dev/null && \
+  curl -s -X POST http://localhost:3456/api/data \
+    -H "Content-Type: application/json" -d '<json>' -o /dev/null 2>/dev/null || true
 ```
-
-Silently skip if the server is not running (the `|| true` handles this).
 
 ---
 

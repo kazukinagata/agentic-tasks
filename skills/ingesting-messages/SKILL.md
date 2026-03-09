@@ -133,7 +133,10 @@ Cowork で毎朝自動実行する場合:
    - フォーマット: `{ "slack": [...ids...], "teams": [...ids...] }` をページ本文の JSON コードブロックに書き込む。
 2. Push data to view server:
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/skills/scripts/push-view-data.sh --tasks '<tasks_json>'
+# Silently skip if server is not running
+curl -s http://localhost:3456/api/health -o /dev/null 2>/dev/null && \
+  curl -s -X POST http://localhost:3456/api/data \
+    -H "Content-Type: application/json" -d '<tasks_json>' -o /dev/null 2>/dev/null || true
 ```
 
 ---

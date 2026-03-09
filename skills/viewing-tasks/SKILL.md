@@ -21,7 +21,7 @@ Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its i
 The view server runs at `http://localhost:3456`. To start it:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT}/server && npx tsx src/index.ts &
+cd ${CLAUDE_PLUGIN_ROOT}/skills/viewing-tasks/server && npx tsx src/index.ts &
 ```
 
 Before starting, check if it's already running:

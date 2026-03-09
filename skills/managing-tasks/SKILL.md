@@ -205,13 +205,13 @@ After creating, updating, or deleting tasks, push fresh data to the view server 
 If `sprintsDatabaseId` is available, also push sprint data to the view server:
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/skills/scripts/push-view-data.sh \
-  --sprints '<sprints_json>'
+# Silently skip if server is not running
+curl -s http://localhost:3456/api/health -o /dev/null 2>/dev/null && \
+  curl -s -X POST http://localhost:3456/api/sprint-data \
+    -H "Content-Type: application/json" -d '<sprints_json>' -o /dev/null 2>/dev/null || true
 ```
 
 Sprints JSON format: `{ "sprints": [...], "currentSprintId": "<active_sprint_id_or_null>", "updatedAt": "<ISO>" }`
-
-Silently skip if the server is not running.
 
 ## Language
 
