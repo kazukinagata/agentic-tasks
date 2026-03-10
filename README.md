@@ -7,7 +7,7 @@ AI-native task management plugin for [Claude Code](https://claude.ai/code) and [
 - **Natural Language CRUD** — Create, update, query, and delete tasks by talking to Claude
 - **Real-time Views** — Kanban, List, Calendar, and Gantt views served locally at `http://localhost:3456` with live updates via SSE (Claude Code)
 - **Autonomous Execution** — Dispatch tasks to parallel tmux sessions (Claude Code) or Scheduled Tasks (Cowork)
-- **Daily Routine** — Automated daily message intake + task dispatch via Cowork Scheduled Tasks
+- **Daily Routine** — Unified daily message intake + task refinement + dispatch (Claude Code and Cowork)
 - **Sprint Management** — Objective-based sprints with backlog ordering, velocity tracking, and automated retrospectives
 - **Stall Detection** — Automatic detection of stuck agents based on complexity-aware time thresholds
 - **Message Intake** — Auto-convert Slack/Teams DMs into categorized tasks
@@ -90,6 +90,7 @@ This creates a Sprints database and adds sprint-related fields (Sprint, Complexi
 |---------|-------------|
 | "show kanban" | Open Kanban board in browser |
 | "list view" | Open List view in browser |
+| "gantt" / "calendar" | Open Gantt or Calendar view in browser |
 
 ### Execution
 
@@ -97,8 +98,7 @@ This creates a Sprints database and adds sprint-related fields (Sprint, Complexi
 |---------|-------------|
 | "execute tasks" | Dispatch ready tasks for execution |
 | "do the next task" | Execute the top-priority task |
-| "process tasks --auto" | Auto-execute all ready tasks in parallel |
-| "daily tasks" | Run daily routine: message intake + task dispatch (Cowork) |
+| "daily tasks" | Run daily routine: message intake + task refinement + dispatch |
 
 ### Sprint Workflow
 
@@ -134,7 +134,7 @@ skills/
 ├── delegating-tasks/         # Task reassignment
 ├── ingesting-messages/       # Message-to-task conversion
 ├── running-standup/          # Sprint status reports
-├── running-daily-tasks/      # Daily message intake + task dispatch (Cowork)
+├── running-daily-tasks/      # Unified daily routine: message intake + task refinement + dispatch
 ├── reviewing-sprint/         # Sprint close and velocity
 └── analyzing-sprint-metrics/ # Retrospective analytics
 agents/

@@ -28,6 +28,7 @@ skills/
 ├── delegating-tasks/      # Reassign tasks to other org members
 ├── ingesting-messages/    # Auto-convert Slack/Teams DMs into tasks
 ├── running-standup/       # Automated sprint status report with stall detection
+├── running-daily-tasks/   # Unified daily routine: message ingestion + task refinement + dispatch
 ├── reviewing-sprint/      # Sprint close: velocity calculation, unfinished task disposition
 └── analyzing-sprint-metrics/ # Retrospective metrics and agent performance analysis
 ```
@@ -62,20 +63,61 @@ Tasks can be executed in three modes:
 
 Tasks have 14 Core fields (auto-repaired if missing) and 11 Extended fields (graceful degradation). Key fields: Status (Backlog/Ready/In Progress/In Review/Done/Blocked), Executor (claude-code/cowork/human), Priority, Blocked By (dependency relation), Complexity Score.
 
+#### State Transitions
+
+```
+Backlog → Ready       (requires description + acceptance criteria + assignees + execution plan; calculates Complexity Score)
+Ready → In Progress   (dispatch to executor)
+In Progress → In Review  (if Requires Review is on)
+In Progress → Done       (if Requires Review is off)
+In Progress → Blocked    (error or dependency)
+In Review → Done      (review approved)
+In Review → In Progress (changes requested)
+Any → Backlog         (deprioritize)
+```
+
 ## Development Commands
 
 ### View Server
 
 ```bash
-# Start the view server
-cd skills/viewing-tasks/server && npx tsx src/index.ts
+cd skills/viewing-tasks/server
+
+npm install          # Install dependencies
+npm run dev          # Start with hot-reload (tsx watch)
+npm run build        # TypeScript compilation
+npm test             # Run tests (vitest)
+npm run test:watch   # Interactive watch mode
+
+# Manual start (no hot-reload)
+npx tsx src/index.ts
 
 # Health check
 curl -s http://localhost:3456/api/health
-
-# Install dependencies
-cd skills/viewing-tasks/server && npm install
 ```
+
+### CI (GitHub Actions)
+
+- **test.yml**: Runs `npm test` on the view server (Node.js 22) + version bump check on PRs
+- Version check enforces that changes to `skills/` or `agents/` (excluding `*.md`, `.github/`, `docs/`) require a version bump in `.claude-plugin/plugin.json`
+
+### Notion Provider Caveats
+
+- Relations must be added ONE AT A TIME via `notion-update-data-source`. Batching multiple `ADD COLUMN RELATION` statements in a single call causes a 500 error.
+
+### SKILL.md Format
+
+Every skill has a `SKILL.md` with YAML front-matter:
+
+```yaml
+---
+name: skill-name
+description: Brief description of what the skill does and its trigger phrases.
+user-invocable: true|false
+---
+```
+
+Skills with `user-invocable: false` are shared skills loaded by other skills (e.g., `detecting-provider`, `resolving-identity`).
 
 ## Key Conventions
 
