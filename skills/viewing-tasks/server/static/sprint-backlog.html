@@ -629,8 +629,29 @@
     };
   }
 
-  fetchAll();
-  connectSSE();
+  // Static mode: if data is embedded, use it directly (no server needed)
+  if (window.__STATIC_DATA__) {
+    allTasks = window.__STATIC_DATA__.tasks || [];
+    if (window.__STATIC_SPRINT_DATA__) {
+      const sprints = window.__STATIC_SPRINT_DATA__.sprints || [];
+      currentSprint = sprints.find(s => s.status === 'Active') || null;
+      if (currentSprint) {
+        document.getElementById('sprint-info').style.display = 'flex';
+        document.getElementById('sprint-name').textContent = currentSprint.name;
+        document.getElementById('sprint-goal').textContent = currentSprint.goal;
+        render();
+      } else {
+        showNoSprint();
+      }
+    } else {
+      render();
+    }
+    document.getElementById('sse-dot').style.display = 'none';
+    document.getElementById('sse-status').textContent = 'Static';
+  } else {
+    fetchAll();
+    connectSSE();
+  }
 </script>
 </body>
 </html>

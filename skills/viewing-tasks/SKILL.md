@@ -15,6 +15,22 @@ You manage the local view server that renders task data as interactive HTML page
 
 Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider`. Skip if already determined in this conversation.
 
+## Environment Detection
+
+Before starting, detect the runtime environment:
+
+```bash
+# Check if running in a remote/sandboxed environment where localhost is not accessible from the user's browser
+if [ -n "${COWORK_SESSION_ID:-}" ] || [ -n "${CLOUD_SHELL:-}" ]; then
+  # Use static HTML export mode (see below)
+  STATIC_MODE=true
+else
+  STATIC_MODE=false
+fi
+```
+
+If `STATIC_MODE=true`, skip "Starting the Server" and go directly to **Static HTML Export** below.
+
 ## Starting the Server
 
 The view server runs at `http://localhost:3456`. To start it:
@@ -73,6 +89,56 @@ All views support:
 - **Client-side filtering**: Filter by Status, Priority, search text
 - **Click-to-copy**: Click a task to copy its ID for use in Claude Code
 - **Dark mode**: Default dark theme
+
+## Static HTML Export
+
+When running in a remote environment (e.g. Cowork VM) where localhost is not accessible from the user's browser, generate a standalone HTML file with embedded task data instead of starting the server.
+
+### Steps
+
+1. Fetch all tasks from the data source (follow the active provider's SKILL.md)
+2. Save the task data as a temporary JSON file:
+
+```bash
+cat > /tmp/tasks.json << 'TASKEOF'
+{ "tasks": [...], "updatedAt": "<ISO timestamp>" }
+TASKEOF
+```
+
+3. For sprint-backlog view, also save sprint data:
+
+```bash
+cat > /tmp/sprints.json << 'SPRINTEOF'
+{ "sprints": [...], "currentSprintId": "..." }
+SPRINTEOF
+```
+
+4. Generate the standalone HTML:
+
+```bash
+# For kanban, list, or product-backlog:
+${CLAUDE_PLUGIN_ROOT}/skills/viewing-tasks/scripts/generate-static-html.sh <view> /tmp/tasks.json > /tmp/<view>.html
+
+# For sprint-backlog (with sprint data):
+${CLAUDE_PLUGIN_ROOT}/skills/viewing-tasks/scripts/generate-static-html.sh sprint-backlog /tmp/tasks.json /tmp/sprints.json > /tmp/sprint-backlog.html
+```
+
+Supported views: `kanban`, `list`, `sprint-backlog`, `product-backlog`
+
+5. Present the generated HTML file to the user. In environments that support artifacts (e.g. Claude Desktop, Cowork), output the HTML content directly so it can be rendered in the browser. Otherwise, inform the user of the file path.
+
+6. Clean up temporary files:
+
+```bash
+rm -f /tmp/tasks.json /tmp/sprints.json /tmp/<view>.html
+```
+
+### Static Mode Behavior
+
+- All task data is embedded in the HTML — no server or network access required
+- SSE indicator shows "Static" instead of "Live"
+- Filtering and search work normally (client-side)
+- Back links to the view selector are disabled (single-file mode)
 
 ## Troubleshooting
 
