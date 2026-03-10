@@ -90,7 +90,7 @@ Determine the environment:
 ### Prompt User
 
 Use AskUserQuestion:
-> "Would you like to register a daily routine that automatically ingests messages and executes your assigned tasks every morning?"
+> "Would you like to register a daily routine that ingests messages into tasks and guides you through task refinement and execution every morning?"
 
 If the user declines, skip this step.
 

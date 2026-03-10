@@ -61,6 +61,8 @@ After provider detection, also check the config for sprint fields (if present):
 
 Valid transitions:
 - Backlog → Ready (when description + acceptance criteria + Assignees are filled; also calculate Complexity Score if absent)
+  - If Execution Plan is empty when promoting to Ready, warn the user and ask them to provide one
+    before proceeding. Do not promote to Ready with an empty Execution Plan.
 - Ready → In Progress (when dispatched to executor)
 - In Progress → In Review (when `Requires Review` is checked and work is done)
 - In Progress → Done (when `Requires Review` is unchecked and work is done)
@@ -174,10 +176,35 @@ For tasks with Executor=claude-code where the target is a git repository:
 - If set, executing-tasks can create an isolated environment via `git worktree add`
 - If left blank, work proceeds on the current branch (not suitable for parallel execution)
 
-### Description and Acceptance Criteria Quality
+### Task Creation Questioning Flow
 
-- Description: Detailed enough to execute without additional questions
-- Acceptance Criteria: Verifiable conditions such as "command X succeeds" or "file Y exists"
+When creating a task, proactively gather the following through AskUserQuestion.
+Do not skip fields — ask for each one unless the user has already explicitly provided it.
+
+**Required questioning (in order):**
+
+1. **Description**: Ask the user to describe the task in enough detail that an agent can execute
+   without additional questions. If the description is vague (under ~50 tokens), ask follow-up
+   questions: "What specifically needs to happen?", "What is the current state vs desired state?"
+
+2. **Acceptance Criteria**: Ask "What are the completion conditions? How will we verify this task
+   is done?" Guide toward machine-verifiable criteria:
+   - Good: "command `npm test` passes", "file `src/auth.ts` exports `validateToken` function",
+     "API returns 200 for `GET /health`"
+   - Bad: "works correctly", "is implemented", "looks good"
+   If criteria are vague, propose concrete alternatives and confirm.
+
+3. **Execution Plan**: Ask "Do you have a plan for how to accomplish this, or would you like to
+   build one together?" If the user provides a plan, confirm it. If not, propose a numbered
+   plan based on the Description and Acceptance Criteria. Each step should specify:
+   - What to do (action verb)
+   - Which files/modules/areas to touch (if known)
+   - Expected outcome of the step
+   If the plan has >7 major steps or touches >5 distinct areas, suggest splitting into
+   multiple smaller tasks.
+
+4. **Context**: Ask "Is there any background information, constraints, or related context the
+   executor should know?" (e.g., existing PRs, design docs, prior decisions)
 
 ## Human → Agent Re-assignment
 

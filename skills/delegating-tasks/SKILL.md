@@ -33,6 +33,15 @@ If the user did not specify a task clearly:
    - 1 match → confirm: "Delegate to {recipient.name}?"
    - 2–5 matches → present the list and ask the user to select one.
 
+## Step 3b: Content Quality Check
+
+Before delegating, verify task content is sufficient for the recipient's agent to execute:
+- If Acceptance Criteria is empty or under 20 characters: ask the user to provide
+  completion conditions before delegating.
+- If Description is empty: ask the user to provide a description before delegating.
+
+These are non-blocking suggestions. Proceed with delegation if the user confirms.
+
 ## Step 4: Update the Task
 
 Apply the following field updates (other fields remain unchanged):

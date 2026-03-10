@@ -1,15 +1,15 @@
 ---
 name: running-daily-tasks
 description: >
-  Unified daily routine: ingests messages into tasks, then auto-dispatches
-  Ready tasks assigned to the current user. Works in both Claude Code and Cowork.
+  Unified daily routine: ingests messages into tasks, then guides user through
+  task refinement and dispatch. Works in both Claude Code and Cowork.
   Triggers on: "daily tasks", "daily routine", "run daily tasks"
 user-invocable: true
 ---
 
 # Agentic Tasks — Daily Routine
 
-Unified daily routine that ingests messages into tasks and auto-dispatches Ready tasks assigned to the current user. Works in both Claude Code and Cowork environments.
+Unified daily routine that ingests messages into tasks, then guides the user through task refinement and dispatch. Works in both Claude Code and Cowork environments.
 
 ---
 
@@ -30,7 +30,10 @@ Record the result as `intake_result`. If the skill was skipped (e.g., no messagi
 
 ## Step 2: Task Dispatch
 
-Execute the `executing-tasks` skill in **auto mode** (dispatch all Ready tasks assigned to the current user without prompting).
+Execute the `executing-tasks` skill (normal mode).
+The skill will verify all tasks have complete Execution Plans, Acceptance Criteria, and
+other required fields before dispatch. The user will be prompted to fill any gaps and
+choose the execution method.
 
 Record the result as `dispatch_result`.
 
