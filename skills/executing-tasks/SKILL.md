@@ -5,7 +5,7 @@ description: >
   or Cowork scheduled tasks. Fetches ready tasks, validates working directories,
   and dispatches to the chosen execution mode.
   Triggers on: "do the next task", "process tasks",
-  "execute tasks", "auto", "ready tasks".
+  "execute tasks", "ready tasks".
 user-invocable: true
 ---
 
@@ -47,6 +47,24 @@ For each fetched task:
 - Verify Working Directory exists: `test -d "$WORKING_DIR"`
 - If not found: exclude that task, set Status = "Blocked", Error Message = "Working directory not found"
 
+### Dispatch Readiness Check (hard gate)
+
+For each task that passed Working Directory validation, verify ALL of the following
+fields are filled. If any field is empty or insufficient, do NOT dispatch.
+Instead, present the gaps to the user and ask them to fill each one via AskUserQuestion.
+
+| Field | Check | If missing |
+|---|---|---|
+| Description | Non-empty, at least ~50 tokens | Ask: "What should this task accomplish?" |
+| Acceptance Criteria | Non-empty, contains testable conditions | Ask: "What are the verifiable completion conditions?" |
+| Execution Plan | Non-empty | Ask: "What is the step-by-step plan for this task?" and propose one based on Description |
+| Working Directory | Non-empty AND directory exists | Ask: "What is the absolute path to the working directory?" |
+
+After the user provides the missing information, update the task via the provider's
+update tool, then re-validate. Only proceed to dispatch when all checks pass.
+
+Display the validated task(s) with a "Ready for dispatch" confirmation:
+
 Display the task list:
 
 ```
@@ -56,11 +74,7 @@ Executable tasks:
 3. [Medium] Fix Bug #42     → /home/user/project-c
 ```
 
-**`--auto` mode:**
-- Claude Code: auto-execute in tmux parallel + plan mode (skip confirmation)
-- Cowork: auto-execute by creating parallel Scheduled Tasks (skip confirmation)
-
-**Normal mode:** Use AskUserQuestion to choose execution method:
+Use AskUserQuestion to choose execution method:
 
 **Claude Code environment (`execution_environment = "claude-code"`):**
 

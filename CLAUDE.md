@@ -20,7 +20,7 @@ skills/
 ├── providers/notion/      # Notion-specific implementation (SKILL.md + setup.md)
 ├── setting-up-tasks/      # Initial plugin setup and MCP configuration
 ├── setting-up-scrum/      # Provisions Sprints DB and sprint-related fields
-├── managing-tasks/        # Task CRUD, state transitions, "next task" logic
+├── managing-tasks/        # Task CRUD with guided creation, state transitions, "next task" logic
 ├── managing-sprints/      # Sprint lifecycle, backlog ordering, sprint planning
 ├── executing-tasks/       # Task dispatch orchestration (single, tmux parallel, Cowork)
 ├── viewing-tasks/         # Local view server management (start, push data, open browser)
