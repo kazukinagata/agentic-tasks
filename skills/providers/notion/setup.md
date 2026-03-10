@@ -25,14 +25,30 @@ Authenticate with your Notion account when prompted.
 
 ## Step 2: Choose Parent Page Location
 
+### 2a: List available teamspaces
+
+Call `notion-get-teams` to retrieve available teamspaces and display them to the user.
+
+### 2b: Ask the user for a shared parent page
+
 Use `AskUserQuestion` to ask:
-> "Where should I create the Agentic Tasks workspace in Notion? Please provide a parent page name or URL. (Leave blank to create at the root of your workspace.)"
+> "Where should I create the Agentic Tasks workspace? To ensure all team members can discover the configuration, please specify an existing page inside a shared teamspace (e.g. a page name or URL)."
+
+Show the teamspaces retrieved in 2a as reference.
+
+**Edge case — no teamspaces found (solo user):**
+If `notion-get-teams` returns no results, the workspace likely has a single user. In this case, inform the user that creating at the workspace root will make the page private and only visible to them, then allow root creation:
+> "No shared teamspaces were found. Creating at the workspace root will make the page private (only visible to you). Is that OK?"
+
+### 2c: Resolve the specified page
+
+Use `notion-search` to find the page the user specified and obtain its page ID (`TARGET_PARENT_PAGE_ID`). If the search returns multiple matches, ask the user to disambiguate.
 
 ## Step 3: Create Parent Page
 
 Create a parent page using `notion-create-pages`:
 - Title: "Agentic Tasks" (or as specified by user)
-- Parent: the page the user specified, or workspace root if blank
+- Parent: `{ "page_id": "<TARGET_PARENT_PAGE_ID>" }` (always use the resolved page ID from Step 2c; only omit for solo users who accepted the private-root fallback)
 
 Note the returned page ID as `PARENT_PAGE_ID`.
 
@@ -134,6 +150,8 @@ This allows `resolving-identity` to work without an API call on subsequent sessi
 After the JSON block, append the following as plain text:
 
 ```
+**WARNING: Do not rename this page.** The plugin discovers configuration by searching for a page titled "Agentic Tasks Config". Renaming it will break auto-discovery for all team members.
+
 ## Schema Contract
 - Core fields: Do not rename or delete (skills depend on them)
 - Extended fields: May be renamed or deleted (some features will stop working)
