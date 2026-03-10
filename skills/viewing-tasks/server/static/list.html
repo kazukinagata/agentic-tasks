@@ -593,8 +593,18 @@
     };
   }
 
-  fetchTasks();
-  connectSSE();
+  // Static mode: if data is embedded, use it directly (no server needed)
+  if (window.__STATIC_DATA__) {
+    allTasks = window.__STATIC_DATA__.tasks || [];
+    document.getElementById('task-count').textContent = `${allTasks.length} tasks`;
+    document.getElementById('updated-at').textContent = window.__STATIC_DATA__.updatedAt ? `Generated: ${new Date(window.__STATIC_DATA__.updatedAt).toLocaleTimeString()}` : '';
+    document.getElementById('sse-dot').style.display = 'none';
+    document.getElementById('sse-status').textContent = 'Static';
+    render();
+  } else {
+    fetchTasks();
+    connectSSE();
+  }
 </script>
 </body>
 </html>
