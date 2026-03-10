@@ -104,16 +104,28 @@ Accept the user's answer or default to 09:00.
 ### Create Scheduled Task
 
 Call `mcp__scheduled-tasks__create_scheduled_task`:
-- `taskId`: `ht-daily-<current_user_id_prefix_8char>`
+- `taskId`: `daily-tasks-<current_user_name_slug>` (see Slug Generation Rules below)
 - `prompt`: `Run the running-daily-tasks skill`
 - `description`: `Agentic Tasks: Daily routine for <user_name>`
 - `cronExpression`: `0 <HH> * * *` (based on user's chosen time, e.g. `0 9 * * *` for 09:00)
+
+### Slug Generation Rules
+
+To generate `<current_user_name_slug>` from the user's display name:
+
+1. Lowercase the text
+2. Replace non-alphanumeric characters with hyphens
+3. Collapse consecutive hyphens
+4. Trim leading/trailing hyphens
+5. Truncate to 30 characters (break at hyphen boundary if possible)
+
+Example: "Taro Yamada" → `taro-yamada`
 
 ### Report
 
 ```
 Daily routine registered: runs every day at <HH:MM>.
-Scheduled Task ID: ht-daily-<id>
+Scheduled Task ID: daily-tasks-<user_name_slug>
 To modify: Cowork → Scheduled Tasks
 ```
 

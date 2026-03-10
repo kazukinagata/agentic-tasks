@@ -97,10 +97,24 @@ Update the task via `notion-update-page`:
 ### 3c: Create Scheduled Task
 
 Call `mcp__scheduled-tasks__create_scheduled_task`:
-- `taskId`: `ht-<notion-page-id-prefix-8char>` (kebab-case)
+- `taskId`: `<task-title-slug>-<page-id-4char>` (see Slug Generation Rules below)
 - `prompt`: the constructed dispatch prompt
 - `description`: `Agentic Tasks: <task-title>`
 - `cronExpression`: omit (ad-hoc, one-off execution)
+
+### Slug Generation Rules
+
+To generate `<task-title-slug>` from the task title:
+
+1. Lowercase the text
+2. Replace non-alphanumeric characters with hyphens
+3. Collapse consecutive hyphens
+4. Trim leading/trailing hyphens
+5. Truncate to 30 characters (break at hyphen boundary if possible)
+
+`<page-id-4char>` is the first 4 characters of the Notion page ID (for uniqueness).
+
+Example: "Implement Login API" with page ID `b2dc0275...` → `implement-login-api-b2dc`
 
 ### 3d: Write Session Reference
 
@@ -125,8 +139,8 @@ Task Dispatch: {dispatch_result}
 If tasks were dispatched, list them:
 
 ```
-  - ht-abc12345 → Feature Login
-  - ht-def67890 → API Tests
+  - feature-login-abc1 → Feature Login
+  - api-tests-def6 → API Tests
 ```
 
 ---
