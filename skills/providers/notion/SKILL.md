@@ -81,6 +81,26 @@ After repair, re-verify and continue. **Never ask the user to manually fix the s
 | Team | relation | `task_team` | → Teams DB |
 | Assignees | people | `task_assignees` | Human executor assignment |
 | Branch | rich_text | `task_branch` | Git branch name (e.g. feature/task-slug). Leave blank to work on the current branch |
+| Source Message ID | rich_text | `task_source_message_id` | Messaging tool message unique ID (e.g. Slack `channel_id:ts`). Used for cross-member dedup |
+
+### Auto-Repair DDL for Extended Fields
+
+If `Source Message ID` is missing and needed, repair with:
+```
+ADD COLUMN "Source Message ID" RICH_TEXT
+```
+
+## Intake Log Database
+
+The Intake Log DB tracks processed message IDs to avoid reprocessing. It is created automatically by the ingesting-messages skill on first run.
+
+| Property | Notion Type | Description |
+|---|---|---|
+| Message ID | title | Message unique ID (e.g. Slack: `channel_id:ts`) |
+| Tool Name | select | `slack` / `teams` / `discord` |
+| Processed At | date | Processing timestamp |
+
+The database ID is stored in the config page as `intakeLogDatabaseId`.
 
 ## Querying Tasks
 

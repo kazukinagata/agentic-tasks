@@ -85,6 +85,18 @@ Create with: Name (title), Owner (people), Status (select: Active/On Hold/Comple
 
 Note the returned data source IDs as `PROJECTS_DS_ID`.
 
+#### Intake Log Database
+
+Create with:
+
+| Property | Type | Config |
+|---|---|---|
+| Message ID | title | — |
+| Tool Name | select | Options: slack, teams, discord |
+| Processed At | date | — |
+
+Note the returned data source ID as `INTAKE_LOG_DS_ID`.
+
 ### Step 4b: Add relations one at a time
 
 **Each `notion-update-data-source` call must contain exactly ONE `ADD COLUMN` statement.** Multiple statements in one call will fail with a 500 error.
@@ -110,6 +122,7 @@ Create a page using `notion-create-pages` under `PARENT_PAGE_ID`:
   "tasksDatabaseId": "<TASKS_DB_ID>",
   "teamsDatabaseId": "<TEAMS_DB_ID>",
   "projectsDatabaseId": "<PROJECTS_DB_ID>",
+  "intakeLogDatabaseId": "<INTAKE_LOG_DB_ID>",
   "selfUserId": "<NOTION_USER_UUID>"
 }
 ```
