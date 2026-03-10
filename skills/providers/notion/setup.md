@@ -32,7 +32,9 @@ Call `notion-get-teams` to retrieve available teamspaces and display them to the
 ### 2b: Ask the user for a shared parent page
 
 Use `AskUserQuestion` to ask:
-> "Where should I create the Agentic Tasks workspace? To ensure all team members can discover the configuration, please specify an existing page inside a shared teamspace (e.g. a page name or URL)."
+> "Where should I create the Agentic Tasks workspace? To ensure all team members can discover the configuration, please specify an existing **page** inside a shared teamspace (e.g. a page name or URL).
+>
+> **Note:** Please choose a normal page, not a database. If you want it directly under a teamspace root, first create a new empty page there in the Notion UI, then tell me its name."
 
 Show the teamspaces retrieved in 2a as reference.
 
@@ -40,9 +42,15 @@ Show the teamspaces retrieved in 2a as reference.
 If `notion-get-teams` returns no results, the workspace likely has a single user. In this case, inform the user that creating at the workspace root will make the page private and only visible to them, then allow root creation:
 > "No shared teamspaces were found. Creating at the workspace root will make the page private (only visible to you). Is that OK?"
 
-### 2c: Resolve the specified page
+### 2c: Resolve and validate the specified page
 
-Use `notion-search` to find the page the user specified and obtain its page ID (`TARGET_PARENT_PAGE_ID`). If the search returns multiple matches, ask the user to disambiguate.
+1. Use `notion-search` to find the page the user specified.
+2. **Reject databases:** If the search result's type is `database`, do NOT use it. Inform the user that databases cannot be used as a parent and ask them to choose a normal page instead.
+3. If the search returns multiple matches, ask the user to disambiguate.
+4. **Verify with `notion-fetch`:** Call `notion-fetch` on the selected page ID to confirm it is a page and to retrieve its ancestor path.
+5. **Show the actual hierarchy:** Display the ancestor path (e.g. "Teamspace > Company Home > Office Manual > **Selected Page**") to the user and ask them to confirm this is the correct location. This is important because `notion-search` results do not show the full hierarchy, which can be misleading.
+
+Once confirmed, note the page ID as `TARGET_PARENT_PAGE_ID`.
 
 ## Step 3: Create Parent Page
 
