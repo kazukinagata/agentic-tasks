@@ -23,6 +23,37 @@ Then restart Claude Code and run the setup skill again.
 Open Cowork settings → MCP Servers → Add Server → Enter `https://mcp.notion.com/mcp`.
 Authenticate with your Notion account when prompted.
 
+## Step 1b: Detect Existing Setup
+
+1. Call `notion-search` with query "Agentic Tasks Config" to check for an existing configuration.
+2. If a Config page is found → enter **Migration Mode**:
+
+### Migration Mode
+
+a. Fetch the Config page body via `notion-fetch` and parse the JSON code block. Display the current configuration to the user.
+
+b. **Remove `selfUserId`**: If `selfUserId` exists in the config, inform the user: "The `selfUserId` field is no longer needed. User identity is now resolved via API each session. Removing it from config."
+
+c. **Remove `projectsDatabaseId`**: If `projectsDatabaseId` exists in the config, inform the user: "The Projects database is no longer used by the plugin. The database will remain in Notion, but the reference will be removed from config."
+
+d. **Check Teams DB entries**:
+   - Fetch teams from `teamsDatabaseId`. Count entries.
+   - 0 entries → Guide the user to Step 4c (Register Initial Teams) of the normal setup flow.
+   - 1+ entries → Display team list and ask if any updates are needed.
+
+e. **Check Sprints DB Team relation**: If `sprintsDatabaseId` exists in config:
+   - Fetch the Sprints DB schema via `notion-fetch`.
+   - If no `Team` field exists → add it: `ADD COLUMN "Team" RELATION('<TEAMS_DS_ID>')`
+
+f. **Tasks DB Team relation**: If a `Team` relation field exists on the Tasks DB:
+   - Inform: "The Team field on Tasks is no longer used by the plugin. It will remain in Notion but the plugin will not read or write it."
+
+g. **Update Config JSON**: Remove `selfUserId` and `projectsDatabaseId` from the JSON code block via `notion-update-page`.
+
+h. Report: "Migration complete. Your setup has been updated to the latest plugin version."
+
+3. If no Config page is found → proceed with normal new setup flow below.
+
 ## Step 2: Choose Parent Page Location
 
 ### 2a: List available teamspaces
@@ -103,12 +134,6 @@ Create with: Name (title), Members (people)
 
 Note the returned data source ID as `TEAMS_DS_ID`.
 
-#### Projects Database
-
-Create with: Name (title), Owner (people), Status (select: Active/On Hold/Completed/Archived), Due Date (date)
-
-Note the returned data source IDs as `PROJECTS_DS_ID`.
-
 #### Intake Log Database
 
 Create with:
@@ -129,11 +154,17 @@ Add the following relations in separate calls:
 
 1. Tasks ← `Blocked By` → Tasks (self): `ADD COLUMN "Blocked By" RELATION('<TASKS_DS_ID>')`
 2. Tasks ← `Parent Task` → Tasks (self): `ADD COLUMN "Parent Task" RELATION('<TASKS_DS_ID>')`
-3. Tasks ← `Project` → Projects (dual, syncs Tasks on Projects): `ADD COLUMN "Project" RELATION('<PROJECTS_DS_ID>', DUAL 'Tasks' 'tasks')`
-4. Tasks ← `Team` → Teams (dual, syncs Tasks on Teams): `ADD COLUMN "Team" RELATION('<TEAMS_DS_ID>', DUAL 'Tasks' 'tasks')`
-5. Projects ← `Team` → Teams: `ADD COLUMN "Team" RELATION('<TEAMS_DS_ID>')`
 
-Steps 3 and 4 automatically create the synced `Tasks` property on Projects/Teams respectively, so no separate calls are needed for those.
+### Step 4c: Register Initial Team(s)
+
+1. Use AskUserQuestion: "Would you like to register your team? Enter a team name and its members (e.g. 'Backend Team: Alice, Bob'). You can add multiple teams. Type 'skip' to skip this step."
+2. If the user provides team info:
+   a. Call `notion-get-users` (no arguments) to list all workspace members.
+   b. For each member name provided, match against the workspace members list (case-insensitive partial match).
+   c. If a name is ambiguous (multiple matches), use AskUserQuestion to confirm which member.
+   d. Create the team page in Teams DB via `notion-create-pages`: Name = team name, Members = resolved user IDs.
+   e. Ask: "Would you like to add another team?" and repeat if yes.
+3. Recommend at least 1 team. If 0 teams are registered, warn: "No teams registered. Team-scoped features (sprint planning, standup, etc.) will not filter by team."
 
 ## Step 5: Create Config Page
 
@@ -145,15 +176,11 @@ Create a page using `notion-create-pages` under `PARENT_PAGE_ID`:
 {
   "tasksDatabaseId": "<TASKS_DB_ID>",
   "teamsDatabaseId": "<TEAMS_DB_ID>",
-  "projectsDatabaseId": "<PROJECTS_DB_ID>",
-  "intakeLogDatabaseId": "<INTAKE_LOG_DB_ID>",
-  "selfUserId": "<NOTION_USER_UUID>"
+  "intakeLogDatabaseId": "<INTAKE_LOG_DB_ID>"
 }
 ```
 
 Replace the placeholders with the actual IDs from Step 4.
-For `selfUserId`: call `notion-get-users` with `user_id: "self"` and use the returned `id` value.
-This allows `resolving-identity` to work without an API call on subsequent sessions.
 
 After the JSON block, append the following as plain text:
 
@@ -169,7 +196,7 @@ After the JSON block, append the following as plain text:
 ## Step 6: Verify
 
 Use `AskUserQuestion` to confirm:
-> "Setup complete! I've created the Agentic Tasks workspace in Notion with Tasks, Teams, and Projects databases, and a Config page storing the database IDs. Would you like me to create a test task to verify everything is working?"
+> "Setup complete! I've created the Agentic Tasks workspace in Notion with Tasks, Teams, and Intake Log databases, and a Config page storing the database IDs. Would you like me to create a test task to verify everything is working?"
 
 If yes, create a test task using `notion-create-pages` with the Tasks database as parent:
 - Title: "Test task — delete me"

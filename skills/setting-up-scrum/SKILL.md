@@ -41,6 +41,14 @@ Schema:
 
 After creating the DB, note its ID as `SPRINTS_DS_ID`.
 
+Then add a Team relation to the Sprints DB (requires `teamsDatabaseId` from `headless_config`):
+
+```
+ADD COLUMN "Team" RELATION('<TEAMS_DS_ID>')
+```
+
+This allows each sprint to be scoped to a specific team.
+
 ## Step 2: Add Sprint Relation to Tasks DB
 
 Obtain the Tasks DB data source ID via `notion-fetch` on `headless_config.tasksDatabaseId`.
@@ -78,7 +86,6 @@ Update the JSON code block in the config page to add:
 {
   "tasksDatabaseId": "...",
   "teamsDatabaseId": "...",
-  "projectsDatabaseId": "...",
   "sprintsDatabaseId": "<NEW_SPRINTS_DB_ID>",
   "maxConcurrentAgents": 3
 }

@@ -57,7 +57,6 @@ After detecting the provider, retrieve database IDs and constants from the Confi
 3. Parse the JSON code block and set the following as the `headless_config` session variable:
    - `tasksDatabaseId` (required)
    - `teamsDatabaseId` (optional)
-   - `projectsDatabaseId` (optional)
    - `sprintsDatabaseId` (optional — exists after setting-up-scrum)
    - `maxConcurrentAgents` (optional — default: 3)
 

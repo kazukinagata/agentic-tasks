@@ -12,7 +12,6 @@ At the start of each session, read the config page to get database IDs:
 3. Parse the JSON code block to extract:
    - `tasksDatabaseId`
    - `teamsDatabaseId`
-   - `projectsDatabaseId`
 
 Use these IDs for all subsequent Notion operations.
 
@@ -77,8 +76,6 @@ After repair, re-verify and continue. **Never ask the user to manually fix the s
 | Due Date | date | `task_due_date` | ISO format |
 | Tags | multi_select | `task_tags` | Free tags |
 | Parent Task | relation | `task_parent` | Self-relation (hierarchy) |
-| Project | relation | `task_project` | → Projects DB |
-| Team | relation | `task_team` | → Teams DB |
 | Assignees | people | `task_assignees` | Human executor assignment |
 | Branch | rich_text | `task_branch` | Git branch name (e.g. feature/task-slug). Leave blank to work on the current branch |
 | Source Message ID | rich_text | `task_source_message_id` | Messaging tool message unique ID (e.g. Slack `channel_id:ts`). Used for cross-member dedup |
@@ -147,10 +144,23 @@ Called by `resolving-identity` shared skill when `active_provider = notion`.
    - `name` ← `response.name`
    - `email` ← `response.person.email` (null if Bot user)
 3. Save to session variable `current_user: { id, name, email }`.
-4. **Fallback**: If `notion-get-users` is unavailable or fails, read the Config Page and use the `selfUserId` field:
-   - `id` ← `selfUserId` from config JSON
+4. **Fallback**: If `notion-get-users` is unavailable or fails:
+   - `id` ← `"unknown"`
    - `name` ← `$USER` environment variable or "local"
    - `email` ← null
+
+## Identity: Resolve Team Membership
+
+Called by `resolving-identity` shared skill when `teamsDatabaseId` is present in config.
+
+1. Call `notion-fetch` on `teamsDatabaseId` to retrieve all team pages.
+2. For each team, inspect the `Members` people field. Check if `current_user.id` is present in the array.
+3. Set `current_user.teams` to the list of matching teams: `[{ id, name, members: [{ id, name }] }]`.
+4. Determine `current_team`:
+   - 1 matching team → automatically set `current_team` to that team.
+   - 2+ matching teams → use AskUserQuestion: "You belong to multiple teams: [list]. Which team are you working with now?"
+   - 0 matching teams → set `current_team: null`.
+5. If `current_team` is set, populate `current_team.members` with all members from that team's `Members` field (array of `{ id, name }`). This is used by downstream skills for team-scoped filtering.
 
 ## Identity: List Org Members
 

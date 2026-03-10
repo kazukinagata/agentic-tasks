@@ -11,15 +11,16 @@ description: >
 
 Generates an automated status report for the active sprint. Focuses on stall detection and blocked task analysis rather than a human "yesterday/today/blockers" format.
 
-## Provider Detection + Config (once per session)
+## Provider Detection + Config + Identity (once per session)
 
-Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` and resolve `current_user` + `current_team`. Skip if already set.
 
 If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
 
 ## Step 1: Find Active Sprint
 
-Fetch all sprints from `headless_config.sprintsDatabaseId`. Find the one with Status = "Active".
+Fetch sprints from `headless_config.sprintsDatabaseId` where `Team = current_team.id` (if `current_team` is set). Find the one with Status = "Active".
 If none, report "No active sprint found" and exit.
 
 ## Step 2: Fetch Sprint Tasks
@@ -45,7 +46,7 @@ Fetch all tasks with Sprint = <Active Sprint ID>.
 ## Step 4: Display Report
 
 ```
-[Sprint Status Report] <Sprint Name>
+[Sprint Status Report] <Sprint Name> (<current_team.name or "All">)
 Goal: <Goal>
 
 RUNNING (In Progress):
