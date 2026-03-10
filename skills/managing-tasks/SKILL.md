@@ -51,8 +51,6 @@ After provider detection, also check the config for sprint fields (if present):
 | Due Date | date | ISO format |
 | Tags | multi_select | Free tags |
 | Parent Task | relation | Self-relation (hierarchy) |
-| Project | relation | → Projects DB |
-| Team | relation | → Teams DB |
 | Assignees | people | Human executor assignment |
 | Branch | rich_text | Git branch name (e.g. feature/task-slug). Leave blank to work on the current branch |
 | Sprint | relation | → Sprints DB (batch assignment; available after setting-up-scrum) |

@@ -79,7 +79,7 @@ Detect the platform and use the appropriate command.
 After starting the server, push current task data so the view is populated.
 Follow the **Pushing Data to View Server** section in the active provider's SKILL.md to:
 1. Fetch all tasks from the data source
-2. Format as `{ "tasks": [...], "updatedAt": "<ISO timestamp>" }`
+2. Format as `{ "tasks": [...], "updatedAt": "<ISO timestamp>", "currentTeam": { "id": "<id>", "name": "<name>" } }` (include `currentTeam` if `current_team` is set from resolving-identity; omit if null)
 3. POST to `http://localhost:3456/api/data`
 
 ## View Features

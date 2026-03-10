@@ -14,11 +14,14 @@ description: >
 
 Manages the sprint (batch) lifecycle and product backlog. A "sprint" here is a scope-box (Objective), not a time-box.
 
-## Provider Detection + Config (once per session)
+## Provider Detection + Config + Identity (once per session)
 
-Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` and resolve `current_user` + `current_team`. Skip if already set.
 
 If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
+
+All sprint operations below are **team-scoped**: filter sprints by `Team = current_team.id` and filter tasks by `Assignees ∈ current_team.members`. If `current_team` is null, skip team filtering (behave as before).
 
 ---
 
@@ -28,7 +31,7 @@ If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up 
 
 ### Step 1: Guard
 
-Fetch all sprints from `headless_config.sprintsDatabaseId`. If any sprint has Status = "Active", report:
+Fetch sprints from `headless_config.sprintsDatabaseId` where `Team = current_team.id` (if `current_team` is set). If any sprint has Status = "Active", report:
 ```
 An active sprint already exists: <Sprint Name>
 Please end the current sprint before starting a new one ("end sprint")
@@ -42,7 +45,7 @@ Use AskUserQuestion to ask:
 
 ### Step 3: Analyze Backlog
 
-Fetch tasks where Status = "Backlog" or "Ready" AND Sprint = empty.
+Fetch tasks where Status = "Backlog" or "Ready" AND Sprint = empty AND Assignees ∈ `current_team.members` (if `current_team` is set).
 
 Build a topological sort considering `Blocked By` chains:
 - Group A: tasks with no unresolved blockers (immediately executable)
@@ -83,6 +86,7 @@ When approved:
    - Goal: <user-provided Goal>
    - Status: "Active"
    - Max Concurrent Agents: <value>
+   - Team: `current_team.id` (if `current_team` is set)
 
 2. Set the `Sprint` field on each selected task to point to the new Sprint page.
 
@@ -101,7 +105,7 @@ View server: http://localhost:3456/sprint-backlog.html
 
 **Triggered by**: "sprint status", "what's in this sprint", "show sprint"
 
-1. Find the Active sprint from `headless_config.sprintsDatabaseId`
+1. Find the Active sprint from `headless_config.sprintsDatabaseId` where `Team = current_team.id` (if `current_team` is set)
 2. Fetch all tasks with Sprint = <Active Sprint ID>
 3. Calculate stall threshold: tasks with Status = "In Progress" AND Dispatched At older than (Complexity Score × stallThresholdMultiplier (see detecting-provider Constants)) hours
 
@@ -129,7 +133,7 @@ Flag STALLED tasks (In Progress with Dispatched At > Score × stallThresholdMult
 
 **Triggered by**: "show backlog", "product backlog"
 
-1. Fetch tasks where Sprint = empty AND Status in [Backlog, Ready]
+1. Fetch tasks where Sprint = empty AND Status in [Backlog, Ready] AND Assignees ∈ `current_team.members` (if `current_team` is set)
 2. Build topological sort by Blocked By chains
 3. Sort within groups: Backlog Order (ascending) → Priority → Complexity Score (descending)
 4. Display numbered list:
@@ -153,7 +157,7 @@ Flag STALLED tasks (In Progress with Dispatched At > Score × stallThresholdMult
 
 **Triggered by**: "suggest backlog order", "reorder backlog", "reprioritize"
 
-1. Fetch all backlog tasks (Sprint = empty)
+1. Fetch all backlog tasks (Sprint = empty) where Assignees ∈ `current_team.members` (if `current_team` is set)
 2. Compute optimal order:
    - Topological sort (dependency-first)
    - Within same tier: Urgent > High > Medium > Low

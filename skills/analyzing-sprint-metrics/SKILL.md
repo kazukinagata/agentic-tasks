@@ -10,17 +10,19 @@ description: >
 
 Automated agent performance analysis derived from Notion task data. Replaces human retrospective with quantitative metrics.
 
-## Provider Detection + Config (once per session)
+## Provider Detection + Config + Identity (once per session)
 
-Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` and resolve `current_user` + `current_team`. Skip if already set.
 
 If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
 
 ## Step 1: Identify Target Sprint
 
-If the user specified a sprint name, find it in `headless_config.sprintsDatabaseId`.
+If the user specified a sprint name, find it in `headless_config.sprintsDatabaseId` where `Team = current_team.id` (if `current_team` is set).
 Otherwise, use AskUserQuestion: "Which sprint's metrics would you like to view? (Default: latest Closed sprint)"
 If no Closed sprint exists, use the most recent Completed sprint.
+When listing sprint candidates, filter by `Team = current_team.id` if `current_team` is set.
 
 ## Step 2: Fetch Sprint and Task Data
 

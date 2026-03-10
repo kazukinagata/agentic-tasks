@@ -10,15 +10,16 @@ description: >
 
 Generates an automated batch completion summary and closes the sprint. The agent generates the summary; the human only approves the disposition of unfinished tasks.
 
-## Provider Detection + Config (once per session)
+## Provider Detection + Config + Identity (once per session)
 
-Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
+2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` and resolve `current_user` + `current_team`. Skip if already set.
 
 If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
 
 ## Step 1: Find Active Sprint
 
-Fetch all sprints from `headless_config.sprintsDatabaseId`. Find the one with Status = "Active".
+Fetch sprints from `headless_config.sprintsDatabaseId` where `Team = current_team.id` (if `current_team` is set). Find the one with Status = "Active".
 If none, report "No active sprint found" and exit.
 
 ## Step 2: Fetch Sprint Tasks
