@@ -51,16 +51,18 @@ Inspect available MCP tools:
 
 Follow the same flow as the ingesting-messages skill:
 
-1. **Log Preparation**: Search for the "Agentic Tasks Message Intake Log" page via `notion-search`. Create if not found.
-2. **Fetch Messages**: Retrieve DMs / mentions from the past 24 hours addressed to `current_user`, excluding already-processed IDs, bots, and self.
+1. **Log Preparation**: Read the config for `intakeLogDatabaseId`. If missing, create the Intake Log DB and update the config.
+2. **Fetch Messages**: Use the multi-query search strategy (DMs + channel mentions + thread participant replies) to retrieve messages from the past 24 hours. Deduplicate, then exclude already-processed IDs, bots, and self-sent messages.
 3. **Classify**: Categorize each message:
    - **A (Hearing Needed)**: Insufficient info → Blocked task + Blocker task (executor=human)
    - **B (Self-Action)**: AI-processable → Ready task (executor=cowork)
    - **C (Delegate)**: Intended for another member → Backlog task (executor=human)
-4. **Create Tasks**: Use `notion-create-pages` directly (same field mappings as ingesting-messages).
+4. **Enrich**: For Category B/C messages, use `AskUserQuestion` to gather Acceptance Criteria, Working Directory, Execution Plan, Context, and Due Date before task creation.
+5. **Dedup**: Before creating each task, check the Tasks DB for existing tasks with the same `Source Message ID`. Skip if already exists.
+6. **Create Tasks**: Use `notion-create-pages` directly (same field mappings as ingesting-messages). Include `Source Message ID` on each created task.
    - For member resolution, load `${CLAUDE_PLUGIN_ROOT}/skills/looking-up-members/SKILL.md`.
-5. **Update Log**: Append processed message IDs (retain up to 1000 entries, FIFO).
-6. **Set** `intake_result = "N new tasks created (A: X, B: Y, C: Z)"`
+7. **Update Log**: Register each processed message in the Intake Log DB via `notion-create-pages` (retain up to 1000 entries, FIFO).
+8. **Set** `intake_result = "N new tasks created (A: X, B: Y, C: Z)"`
 
 ---
 

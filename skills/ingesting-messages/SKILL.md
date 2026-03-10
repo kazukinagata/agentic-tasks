@@ -46,22 +46,58 @@ Inspect available MCP tools and determine which messaging tool to use:
 
 ### Message Intake Log Preparation
 
-1. Search for the "Agentic Tasks Message Intake Log" page via `notion-search`.
-2. If not found: Auto-create via `notion-create-pages` (under the Agentic Tasks parent page).
-3. Load the `processed_message_ids` set (per tool name) from the page body.
-   Format example: `{ "slack": ["msg_id1", "msg_id2", ...] }`
+The Intake Log is a Notion database (`Intake Log`) that tracks which messages have already been processed.
+
+1. Read the config page and check for `intakeLogDatabaseId`.
+2. If `intakeLogDatabaseId` is missing or the database does not exist:
+   - Create a new database named "Intake Log" under the Agentic Tasks parent page using `notion-create-database`.
+   - Schema:
+     | Property | Notion Type | Description |
+     |---|---|---|
+     | Message ID | title | Message unique ID (e.g. Slack: `channel_id:ts`) |
+     | Tool Name | select | `slack` / `teams` / `discord` |
+     | Processed At | date | Processing timestamp |
+   - Write the new database ID back to the config page as `intakeLogDatabaseId`.
+3. Load `processed_message_ids`: query `intakeLogDatabaseId` via `notion-search` and collect all existing Message ID values.
+4. **FIFO cleanup**: If the Intake Log has more than 1000 entries, delete the oldest records (by Processed At) until the count is at or below 1000.
 
 ---
 
 ## Step 1: Fetch Unprocessed Messages
 
-Use the detected Messaging MCP to retrieve DMs / mentions from the past 24 hours:
+Use the detected Messaging MCP to retrieve all messages from the past 24 hours addressed to `current_user` via a multi-query strategy:
 
-- Filter criteria:
-  - Addressed to self (DM or mention targeting `current_user`)
-  - `id ∉ processed_message_ids` (skip duplicates)
-  - Not sent by a bot
-  - Not sent by self (exclude own messages)
+### 1a. Search Intent (platform-agnostic)
+
+Retrieve every message from the past 24 hours that is directed at or contextually relevant to `current_user`:
+1. **DMs**: Direct messages sent to self
+2. **Channel mentions**: Messages in channels/groups that @-mention `current_user`
+3. **Thread participant replies**: New replies in threads where `current_user` has participated (started or replied), even if no @-mention is present
+
+### 1b. Slack Query Example
+
+- **Query 1 (DMs)**: Search with `to:me`
+- **Query 2 (Channel mentions)**: Search for messages containing `<@USER_ID>` (the `current_user`'s Slack user ID). Exclude own messages.
+- **Query 3 (Thread participant replies)**:
+  1. From Query 1, Query 2, and a `from:me` search (past 24h), collect all `thread_ts` values of threads `current_user` participates in
+  2. Fetch replies for each thread
+  3. Exclude own messages and already-processed messages
+  4. If the MCP does not support thread-level queries, skip Query 3 and note it in the summary
+
+### 1c. Common Filters (applied after merge)
+
+- `id ∉ processed_message_ids`
+- Not a bot message (check `bot_id` / `subtype`)
+- Not sent by self
+
+### 1d. Deduplication
+
+Merge all query results and deduplicate by message unique ID (Slack: `channel_id:ts`).
+
+### 1e. Platform Notes
+
+- **Teams / Discord**: Translate to equivalent APIs. The intent (DMs + mentions + thread participant replies) is the same.
+- **Thread queries unsupported**: Skip Query 3 and add `(thread check: skipped — MCP does not support thread queries)` to the summary.
 
 ---
 
@@ -77,11 +113,62 @@ Classify each message into one of 3 categories:
 
 **When classification is unclear**: Treat as Category A (safe default).
 
+### Classification Heuristics and Examples
+
+**Category A (Hearing Needed)** — default when uncertain:
+- Question format: "Can you …?", "What's the status of …?"
+- Approval requests: "Review and approve this"
+- References context the AI does not have: "about that thing we discussed yesterday"
+- Example: `"Hey, can you look at the design doc and let me know if the approach works?"` → A (which document? what feedback criteria?)
+
+**Category B (Self-Action)** — clear and actionable:
+- Specific work request: "Write unit tests for the auth module"
+- Research / summary: "Compile the Q3 metrics report"
+- Implementation request with sufficient context to start
+- Example: `"Please update the README to include the new API endpoints"` → B
+
+**Category C (Delegate)** — explicitly addressed to another member:
+- Names another member: "Ask @alice to …"
+- Current user is CC; the action owner is someone else
+- Example: `"@you FYI — @bob needs to update his deployment script"` → C (action owner is Bob)
+
+**Decision rule**: If torn between B and A → choose A. If torn between C and A → choose A. A is always the safe default.
+
+---
+
+## Step 2.5: Enrich Task Details (Category B/C)
+
+Before creating tasks, enrich Category B and C messages with additional details via `AskUserQuestion`.
+
+**Category B (Self-Action) — ask:**
+- Acceptance Criteria: What are the completion conditions?
+- Working Directory: Which repository / directory to work in?
+- Execution Plan: Any specific approach or constraints?
+- Context: Additional background information?
+
+**Category C (Delegate) — ask:**
+- Acceptance Criteria: What is the expected deliverable?
+- Context: Background info for the assignee (or their agent)
+- Due Date: Any deadline?
+
+**How to ask:**
+- If there are multiple B/C messages, batch them into a single `AskUserQuestion` call (do not ask per-message)
+- If the user replies "as-is" or equivalent, proceed with only the information from the original message
+- Incorporate answers into the task fields when creating tasks in Step 3
+
 ---
 
 ## Step 3: Bulk Task Creation
 
 Create tasks directly via `notion-create-pages` for each message (do not go through the managing-tasks skill).
+
+### Pre-Creation Dedup Check
+
+Before creating each task:
+1. Generate `source_message_id` from the message unique ID (Slack: `channel_id:ts`)
+2. Query the Tasks DB via `notion-search` for existing tasks with the same `Source Message ID`
+3. If a matching task exists: skip the message and count it as `Skipped (already exists as task)`
+4. If no match: include `Source Message ID` in the created task's fields
 
 ### Common Fields
 
@@ -127,10 +214,12 @@ Create tasks directly via `notion-create-pages` for each message (do not go thro
 
 ## Step 4: Log Update + View Server Push
 
-1. Append processed message IDs to the "Agentic Tasks Message Intake Log".
-   - Retain up to 1000 entries (FIFO: remove oldest IDs first).
-   - Format: Write `{ "slack": [...ids...], "teams": [...ids...] }` as a JSON code block in the page body.
-2. Push data to view server:
+1. For each processed message, create a record in the Intake Log DB via `notion-create-pages`:
+   - Message ID: the message unique ID (e.g. `channel_id:ts`)
+   - Tool Name: the messaging tool name (e.g. `slack`)
+   - Processed At: current timestamp
+2. If the Intake Log DB exceeds 1000 entries, delete the oldest records (by Processed At) to bring it back to 1000.
+3. Push data to view server:
 ```bash
 # Silently skip if server is not running
 curl -s http://localhost:3456/api/health -o /dev/null 2>/dev/null && \
@@ -144,7 +233,7 @@ curl -s http://localhost:3456/api/health -o /dev/null 2>/dev/null && \
 
 ```
 [Message Intake Complete] via {tool_name}
-Processed: N / Skipped: K (already processed)
+Processed: N / Skipped (already processed): K / Skipped (already exists as task): J
   A (Hearing Needed): X → Blocked tasks + Blocker tasks created
   B (Self-Action):    Y → Ready tasks created
   C (Delegate):       Z → Backlog tasks created
