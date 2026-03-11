@@ -40,7 +40,7 @@ Fetch all tasks with Sprint = <Active Sprint ID>.
 - Stall threshold: If Complexity Score is null, use stallDefaultHours as default
 - Show: Task title, Session Reference, elapsed hours, expected duration hint
 
-**BLOCKED** — Status = "Blocked" OR (Status = "Backlog"/"Ready" AND Blocked By is not empty)
+**BLOCKED** — Status = "Blocked" OR (Status = "Backlog"/"Ready" AND Blocked By contains any non-Done task)
 - Show: Task title, Blocked By task names, Error Message if present
 
 ## Step 4: Display Report

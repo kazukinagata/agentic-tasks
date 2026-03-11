@@ -368,6 +368,16 @@
     return m;
   }
 
+  function hasUnresolvedBlockers(task) {
+    if (!task.blockedBy || task.blockedBy.length === 0) return false;
+    const taskMap = {};
+    allTasks.forEach(t => taskMap[t.id] = t);
+    return task.blockedBy.some(id => {
+      const blocker = taskMap[id];
+      return !blocker || blocker.status !== 'Done';
+    });
+  }
+
   function render() {
     const search = document.getElementById('search').value.toLowerCase();
     const priority = document.getElementById('filter-priority').value;
@@ -381,7 +391,7 @@
       (!search || t.title.toLowerCase().includes(search)) &&
       (!priority || t.priority === priority) &&
       (!executor || t.executor === executor) &&
-      (!blocked || (blocked === 'blocked' ? t.blockedBy.length > 0 : t.blockedBy.length === 0))
+      (!blocked || (blocked === 'blocked' ? hasUnresolvedBlockers(t) : !hasUnresolvedBlockers(t)))
     );
 
     // Sort: Backlog Order (asc, null last) → Priority → Complexity Score (desc)
@@ -405,7 +415,7 @@
     tbody.innerHTML = filtered.map((t, i) => {
       const pc = t.priority ? prioClass[t.priority] : '';
       const sc = statusClass[t.status] || '';
-      const isBlocked = t.blockedBy && t.blockedBy.length > 0;
+      const isBlocked = hasUnresolvedBlockers(t);
       const depNames = (t.blockedBy || []).map(id => '<span class="dep-chain-name">' + esc(titleMap[id] || id.slice(0,8)+'...') + '</span>').join(', ');
       const blockedSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a4 4 0 0 0-4 4v2H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V5a4 4 0 0 0-4-4zm2.5 6H5.5V5a2.5 2.5 0 0 1 5 0v2z"/></svg>';
       return `<tr class="${isBlocked ? 'blocked-row' : ''}" onclick="openTask('${esc(t.url || '')}', '${t.id}')">

@@ -48,7 +48,7 @@ When listing sprint candidates, filter by `Team = current_team.id` if `current_t
   - If no snapshot data, note "Cannot estimate from Dispatched At data"
 
 ### Dependency Analysis
-- Blocked tasks at sprint start: tasks with non-empty Blocked By at sprint creation
+- Blocked tasks at sprint start: tasks with Blocked By containing any non-Done task at sprint creation
 - Resolved during sprint: blocked tasks that reached Done status
 - Bottleneck identification: tasks whose completion unblocked the most other tasks
 

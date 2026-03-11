@@ -55,7 +55,7 @@ After repair, re-verify and continue. **Never ask the user to manually fix the s
 | Description | rich_text | `task_description` | Orchestrator-written detail |
 | Acceptance Criteria | rich_text | `task_acceptance_criteria` | Verifiable completion conditions |
 | Status | select | `task_status` | Backlog / Ready / In Progress / In Review / Done / Blocked |
-| Blocked By | relation | `task_blocked_by` | Self-relation (dependency). Empty = actionable |
+| Blocked By | relation | `task_blocked_by` | Self-relation (dependency). Empty or all blockers Done = actionable |
 | Priority | select | `task_priority` | Urgent / High / Medium / Low |
 | Executor | select | `task_executor` | claude-code / cowork / human |
 | Requires Review | checkbox | `task_requires_review` | On → must pass In Review. Off → can go directly to Done |
@@ -102,7 +102,7 @@ The database ID is stored in the config page as `intakeLogDatabaseId`.
 ## Querying Tasks
 
 - Filter by Status: Use `notion-search` with filter params, or `notion-fetch` on `tasksDatabaseId` and post-process
-- Filter Blocked By = empty: post-process by checking that the `Blocked By` relation array is empty
+- Filter Blocked By resolved: post-process by checking that the `Blocked By` relation array is empty OR by fetching each referenced task's Status and confirming all are "Done"
 - Sort by Priority: Urgent > High > Medium > Low; then by Due Date (earliest first)
 
 ## Task Record Reference

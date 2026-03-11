@@ -54,8 +54,8 @@ If the health check succeeds, the server is already running. Do NOT start a seco
 | View Selector | http://localhost:3456/ | Available |
 | List | http://localhost:3456/list.html | Available |
 | Kanban | http://localhost:3456/kanban.html | Available |
-| Calendar | http://localhost:3456/calendar.html | Coming soon |
-| Gantt | http://localhost:3456/gantt.html | Coming soon |
+| Calendar | http://localhost:3456/calendar.html | Available |
+| Gantt | http://localhost:3456/gantt.html | Available |
 
 ## Opening a View
 

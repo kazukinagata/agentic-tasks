@@ -47,9 +47,9 @@ Use AskUserQuestion to ask:
 
 Fetch tasks where Status = "Backlog" or "Ready" AND Sprint = empty AND Assignees ∈ `current_team.members` (if `current_team` is set).
 
-Build a topological sort considering `Blocked By` chains:
-- Group A: tasks with no unresolved blockers (immediately executable)
-- Group B: tasks blocked only by Group A tasks
+Build a topological sort considering `Blocked By` chains (a blocker is "resolved" if its Status = Done):
+- Group A: tasks with no unresolved blockers (Blocked By is empty or all blockers are Done — immediately executable)
+- Group B: tasks blocked only by Group A tasks (that are not yet Done)
 - Group C+: deeper dependency chains
 
 Within each group, sort by: Priority (Urgent > High > Medium > Low) then Complexity Score (higher first).
