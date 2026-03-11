@@ -1,9 +1,16 @@
+import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { EventBus } from "./sse.js";
 import type { TasksResponse, SprintsResponse } from "./types.js";
+
+function getCustomViewsDir(): string {
+  return process.env.CUSTOM_VIEWS_DIR || join(homedir(), ".agentic-tasks", "views");
+}
 
 const eventBus = new EventBus();
 const sprintEventBus = new EventBus();
@@ -93,6 +100,46 @@ app.get("/api/events", async (c) => {
 
     unsubscribe();
   });
+});
+
+// Custom views API
+app.get("/api/views", (c) => {
+  const dir = getCustomViewsDir();
+  if (!existsSync(dir)) {
+    return c.json({ views: [] });
+  }
+  const files = readdirSync(dir).filter((f) => f.endsWith(".html"));
+  const views = files.map((filename) => {
+    const slug = filename.replace(/\.html$/, "");
+    let name = slug;
+    let description = "";
+    try {
+      const content = readFileSync(join(dir, filename), "utf-8");
+      const nameMatch = content.match(/<meta\s+name="view-name"\s+content="([^"]*)"/);
+      const descMatch = content.match(/<meta\s+name="view-description"\s+content="([^"]*)"/);
+      if (nameMatch) name = nameMatch[1];
+      if (descMatch) description = descMatch[1];
+    } catch {
+      // ignore read errors
+    }
+    return { slug, name, description, filename };
+  });
+  return c.json({ views });
+});
+
+// Serve custom view HTML files
+app.get("/custom/:filename", (c) => {
+  const dir = getCustomViewsDir();
+  const filename = c.req.param("filename");
+  if (!filename.endsWith(".html") || filename.includes("..")) {
+    return c.notFound();
+  }
+  const filepath = join(dir, filename);
+  if (!existsSync(filepath)) {
+    return c.notFound();
+  }
+  const content = readFileSync(filepath, "utf-8");
+  return c.html(content);
 });
 
 // Static files — AFTER API routes

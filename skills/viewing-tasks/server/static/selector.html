@@ -217,5 +217,45 @@
     </a>
   </div>
   <footer>Agentic Tasks &bull; Real-time updates via SSE</footer>
+  <script>
+    (async () => {
+      try {
+        const res = await fetch('/api/views');
+        const { views } = await res.json();
+        if (!views || views.length === 0) return;
+
+        const grid = document.querySelector('.grid');
+
+        const heading = document.createElement('h2');
+        heading.textContent = 'Custom Views';
+        heading.style.cssText = 'font-size:24px;font-weight:300;color:var(--label-primary);letter-spacing:-0.01em;margin-top:48px;margin-bottom:14px;width:100%;max-width:720px;';
+        grid.parentNode.insertBefore(heading, grid.nextSibling);
+
+        const customGrid = document.createElement('div');
+        customGrid.className = 'grid';
+        customGrid.style.marginTop = '0';
+        heading.after(customGrid);
+
+        views.forEach(v => {
+          const a = document.createElement('a');
+          a.href = '/custom/' + v.slug + '.html';
+          a.className = 'card';
+          a.innerHTML = `
+            <span class="card-icon">
+              <svg viewBox="0 0 28 28" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="14" cy="14" r="10"/>
+                <path d="M14 8v6l4 2"/>
+              </svg>
+            </span>
+            <div class="card-title">${v.name}</div>
+            <div class="card-desc">${v.description || 'Custom view'}</div>
+          `;
+          customGrid.appendChild(a);
+        });
+      } catch {
+        // silently ignore — server might not support /api/views
+      }
+    })();
+  </script>
 </body>
 </html>
