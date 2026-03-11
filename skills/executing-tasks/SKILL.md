@@ -30,7 +30,7 @@ If any Core field is missing, follow the active provider SKILL.md's instructions
 
 1. Query tasks where:
    - Status = "Ready"
-   - Blocked By is empty (no unresolved dependencies)
+   - Blocked By is empty or all Blocked By tasks are Done (no unresolved dependencies)
    - Executor = current environment's executor type:
      - `execution_environment = "claude-code"` → Executor = "claude-code"
      - `execution_environment = "cowork"` → Executor = "cowork"

@@ -30,7 +30,7 @@ After provider detection, also check the config for sprint fields (if present):
 | Description | rich_text | Orchestrator-written detail |
 | Acceptance Criteria | rich_text | Verifiable completion conditions |
 | Status | select | Backlog / Ready / In Progress / In Review / Done / Blocked |
-| Blocked By | relation | Self-relation (dependency). Empty = actionable |
+| Blocked By | relation | Self-relation (dependency). Empty or all blockers Done = actionable |
 | Priority | select | Urgent / High / Medium / Low |
 | Executor | select | claude-code / cowork / human |
 | Requires Review | checkbox | On → must pass In Review. Off → can go directly to Done |
@@ -93,7 +93,7 @@ Write the result to the `Complexity Score` field via the provider's update tool.
 When the user asks "what should I do next?" or "next task":
 
 **If `sprintsDatabaseId` is in config and an Active sprint exists:**
-1. Fetch tasks: Sprint = ActiveSprint AND Status = "Ready" AND Blocked By = empty
+1. Fetch tasks: Sprint = ActiveSprint AND Status = "Ready" AND (Blocked By is empty or all Blocked By tasks are Done)
 2. Sort by: Backlog Order (asc) → Priority (Urgent > High > Medium > Low) → Complexity Score (desc)
 3. Count tasks with Status = "In Progress" in the sprint (running agents)
 4. If running count >= `maxConcurrentAgents`: report "Currently <N> agents are running (limit: <M>). Wait for completion or increase the limit."
@@ -102,7 +102,7 @@ When the user asks "what should I do next?" or "next task":
 
 **If no Active sprint (or scrum not set up):**
 1. Query tasks where Status = "Ready" using the active provider's query tools
-2. Filter out tasks where `Blocked By` is not empty (unresolved dependencies)
+2. Filter out tasks where `Blocked By` contains any non-Done task (unresolved dependencies)
 3. Sort by Priority: Urgent > High > Medium > Low
 4. Within same priority, sort by Due Date (earliest first)
 5. Present the top task with its full context
