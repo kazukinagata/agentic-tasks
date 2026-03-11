@@ -20,8 +20,12 @@ case "$VIEW" in
   kanban|list|sprint-backlog|product-backlog)
     TEMPLATE="$STATIC_DIR/${VIEW}.html"
     ;;
+  custom:*)
+    SLUG="${VIEW#custom:}"
+    TEMPLATE="$HOME/.agentic-tasks/views/${SLUG}.html"
+    ;;
   *)
-    echo "Error: Unknown view '$VIEW'. Supported: kanban, list, sprint-backlog, product-backlog" >&2
+    echo "Error: Unknown view '$VIEW'. Supported: kanban, list, sprint-backlog, product-backlog, custom:<slug>" >&2
     exit 1
     ;;
 esac

@@ -82,6 +82,37 @@ Follow the **Pushing Data to View Server** section in the active provider's SKIL
 2. Format as `{ "tasks": [...], "updatedAt": "<ISO timestamp>", "currentTeam": { "id": "<id>", "name": "<name>" } }` (include `currentTeam` if `current_team` is set from resolving-identity; omit if null)
 3. POST to `http://localhost:3456/api/data`
 
+## Custom Views
+
+Users can create custom visualizations using the `managing-views` skill. Custom views are served at `/custom/<slug>.html`.
+
+### Opening a Custom View
+
+```bash
+# macOS
+open http://localhost:3456/custom/<slug>.html
+
+# Linux
+xdg-open http://localhost:3456/custom/<slug>.html
+
+# WSL
+wslview http://localhost:3456/custom/<slug>.html
+```
+
+### Listing Custom Views
+
+```bash
+ls ~/.agentic-tasks/views/*.html
+```
+
+### Static Export for Custom Views
+
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/viewing-tasks/scripts/generate-static-html.sh custom:<slug> /tmp/tasks.json > /tmp/<slug>.html
+```
+
+To create, delete, or regenerate custom views, use the `managing-views` skill.
+
 ## View Features
 
 All views support:

@@ -1,4 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import app from "./app.js";
 import type { Task, TasksResponse } from "./types.js";
 
@@ -173,5 +176,78 @@ describe("POST /api/data and GET /api/tasks", () => {
     const body = await getRes.json() as TasksResponse;
     expect(body.tasks).toHaveLength(1);
     expect(body.tasks[0].id).toBe("new");
+  });
+});
+
+describe("Custom views", () => {
+  const testDir = join(tmpdir(), `agentic-tasks-test-${Date.now()}`);
+
+  beforeEach(() => {
+    process.env.CUSTOM_VIEWS_DIR = testDir;
+  });
+
+  afterEach(() => {
+    delete process.env.CUSTOM_VIEWS_DIR;
+    try {
+      rmSync(testDir, { recursive: true, force: true });
+    } catch {
+      // ignore
+    }
+  });
+
+  describe("GET /api/views", () => {
+    it("returns empty array when custom views dir does not exist", async () => {
+      const res = await app.request("/api/views");
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.views).toEqual([]);
+    });
+
+    it("returns views with parsed metadata", async () => {
+      mkdirSync(testDir, { recursive: true });
+      writeFileSync(
+        join(testDir, "my-dashboard.html"),
+        '<html><head><meta name="view-name" content="My Dashboard"><meta name="view-description" content="A test dashboard"></head><body>test</body></html>',
+      );
+
+      const res = await app.request("/api/views");
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.views).toHaveLength(1);
+      expect(body.views[0]).toEqual({
+        slug: "my-dashboard",
+        name: "My Dashboard",
+        description: "A test dashboard",
+        filename: "my-dashboard.html",
+      });
+    });
+  });
+
+  describe("GET /custom/:filename", () => {
+    it("returns 404 for nonexistent file", async () => {
+      mkdirSync(testDir, { recursive: true });
+      const res = await app.request("/custom/nonexistent.html");
+      expect(res.status).toBe(404);
+    });
+
+    it("blocks path traversal attempts", async () => {
+      const res = await app.request("/custom/..%2F..%2Fetc%2Fpasswd");
+      expect(res.status).toBe(404);
+    });
+
+    it("rejects non-html files", async () => {
+      const res = await app.request("/custom/script.js");
+      expect(res.status).toBe(404);
+    });
+
+    it("serves existing custom view HTML", async () => {
+      mkdirSync(testDir, { recursive: true });
+      writeFileSync(join(testDir, "test.html"), "<html><body>Hello</body></html>");
+
+      const res = await app.request("/custom/test.html");
+      expect(res.status).toBe(200);
+      const body = await res.text();
+      expect(body).toContain("Hello");
+    });
   });
 });
