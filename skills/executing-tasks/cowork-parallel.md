@@ -45,6 +45,12 @@ Created N Cowork Scheduled Tasks:
 - feature-login-abc1 → Feature Login
 - api-tests-def6 → API Tests
 
+⚠️ Set the working folder for each Scheduled Task in the Cowork settings screen:
+- feature-login-abc1 → <Working Directory value from task>
+- api-tests-def6 → <Working Directory value from task>
+
 Run each task from the Cowork Scheduled Tasks screen.
 Check completion status: /viewing-my-tasks
 ```
+
+For each task, read the **Working Directory** field and display it in the report. If the field is empty, show the current repository root as the default.
