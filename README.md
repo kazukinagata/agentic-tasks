@@ -170,7 +170,7 @@ The Notion hosted MCP server (`https://mcp.notion.com/mcp`) has significant quer
 | Environment | Approach | How it works |
 |------------|----------|-------------|
 | **Claude Code** | `query-tasks.sh` script | Calls Notion REST API directly (`POST /v1/databases/{db_id}/query`) with `curl`. Supports people filters, compound filters, sorts, pagination. Requires `NOTION_TOKEN` env var (internal integration token). |
-| **Cowork** | `.mcpb` Desktop Extension (planned) | Node.js MCP server packaged as a Desktop Extension. Token stored in OS Keychain via `sensitive: true` in manifest. One-click install. |
+| **Cowork** | `.mcpb` Desktop Extension | Node.js MCP server packaged as a Desktop Extension. Token stored in OS Keychain via `sensitive: true` in manifest. Build from `skills/providers/notion/extension/`. |
 | **Fallback** | MCP-only | `notion-search` → individual `notion-fetch` per page → client-side filter. Works without any token but slow for large databases. |
 
 See `skills/providers/notion/SKILL.md` § "Querying Tasks" for implementation details.

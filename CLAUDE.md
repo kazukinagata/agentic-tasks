@@ -141,4 +141,10 @@ Before creating a PR that modifies `skills/` or `agents/`:
 1. Bump version in `.claude-plugin/plugin.json`
 2. Commit with message: `chore: bump version to X.Y.Z`
 
+### Desktop Extension (`skills/providers/notion/extension/`)
+
+When modifying non-markdown files in the extension directory:
+1. Bump version in both `manifest.json` and `package.json` (must match)
+2. Follow the same semver rules as above
+
 Files that do NOT require version bumps: `docs/`, `.github/`, `*.md` (root), `test/`

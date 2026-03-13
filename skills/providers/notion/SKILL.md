@@ -149,7 +149,15 @@ The script returns `{"results": [...]}` with full page objects including all pro
 
 ### Path 2: notion-query Extension (Cowork)
 
-When the `notion-query` MCP tool is available (installed via Desktop Extension), call it with the same filter/sort parameters as Path 1. See the Extension documentation for tool interface details.
+When the `notion-query` MCP tool is available (installed via Desktop Extension), call it directly:
+
+```
+notion-query({ database_id: "<tasksDatabaseId>", filter: <filter_object>, sorts: <sort_array> })
+```
+
+The tool accepts the same filter/sort objects as Path 1's filter recipes. It returns `{"results": [...]}` with full page objects.
+
+**Build & install:** See `skills/providers/notion/extension/` for source and build instructions.
 
 ### Path 3: MCP Fallback (no token, no extension)
 
