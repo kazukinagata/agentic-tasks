@@ -77,7 +77,7 @@ Retrieve every message from the past 24 hours that is directed at or contextuall
 ### 1b. Slack Query Example
 
 - **Query 1 (DMs)**: Search with `to:me`
-- **Query 2 (Channel mentions)**: Search for messages containing `<@USER_ID>` (the `current_user`'s Slack user ID). Exclude own messages.
+- **Query 2 (Channel mentions)**: Search for messages containing `<@USER_ID>` (the `current_user`'s Slack user ID). Exclude own messages. Search scope must include both public and private channels the user is a member of. If the MCP tool has a channel-type filter, ensure `private` / `mpim` / `im` types are included alongside `public_channel`.
 - **Query 3 (Thread participant replies)**:
   1. From Query 1, Query 2, and a `from:me` search (past 24h), collect all `thread_ts` values of threads `current_user` participates in
   2. Fetch replies for each thread
@@ -87,7 +87,7 @@ Retrieve every message from the past 24 hours that is directed at or contextuall
 ### 1c. Common Filters (applied after merge)
 
 - `id ∉ processed_message_ids`
-- Not a bot message (check `bot_id` / `subtype`)
+- If bot message (has `bot_id` or bot-related `subtype`): keep only if it @-mentions `current_user`; discard otherwise
 - Not sent by self
 
 ### 1d. Deduplication
