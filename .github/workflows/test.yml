@@ -52,4 +52,44 @@ jobs:
             echo "::error::plugin.json version ($HEAD_VER) was not updated. Bump the version when changing skills/ or agents/."
             exit 1
           fi
-          echo "Version check passed: $HEAD_VER"
+          echo "Plugin version check passed: $HEAD_VER"
+
+      - name: Check if extension version bump is needed
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          EXT_DIR="skills/providers/notion/extension"
+          CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD -- \
+            "$EXT_DIR/" ':!*.md')
+          if [ -z "$CHANGED" ]; then
+            echo "No extension changes — version bump not required."
+            exit 0
+          fi
+          echo "Extension changes detected:"
+          echo "$CHANGED"
+          EXT_MANIFEST="$EXT_DIR/manifest.json"
+          EXT_PKG="$EXT_DIR/package.json"
+          BASE_M_VER=$(git show "$BASE_SHA":"$EXT_MANIFEST" 2>/dev/null | python3 -c "
+          import json, sys; print(json.load(sys.stdin)['version'])" 2>/dev/null || echo "NEW")
+          HEAD_M_VER=$(python3 -c "
+          import json
+          with open('$EXT_MANIFEST') as f:
+              print(json.load(f)['version'])")
+          BASE_P_VER=$(git show "$BASE_SHA":"$EXT_PKG" 2>/dev/null | python3 -c "
+          import json, sys; print(json.load(sys.stdin)['version'])" 2>/dev/null || echo "NEW")
+          HEAD_P_VER=$(python3 -c "
+          import json
+          with open('$EXT_PKG') as f:
+              print(json.load(f)['version'])")
+          if [ "$BASE_M_VER" = "NEW" ]; then
+            echo "New extension — no previous version to compare."
+            exit 0
+          fi
+          if [ "$BASE_M_VER" = "$HEAD_M_VER" ]; then
+            echo "::error::Extension manifest.json version ($HEAD_M_VER) was not updated. Bump the version when changing extension files."
+            exit 1
+          fi
+          if [ "$HEAD_M_VER" != "$HEAD_P_VER" ]; then
+            echo "::error::Extension version mismatch: manifest.json=$HEAD_M_VER, package.json=$HEAD_P_VER. Keep them in sync."
+            exit 1
+          fi
+          echo "Extension version check passed: $HEAD_M_VER"

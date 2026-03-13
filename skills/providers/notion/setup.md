@@ -193,6 +193,42 @@ After the JSON block, append the following as plain text:
 - User-defined fields: Fully customizable (add Sprint, Epic, Story Points, etc. as needed)
 ```
 
+## Step 5b: Configure Notion API Token (Recommended for Claude Code)
+
+For faster task queries with server-side filtering (by assignee, status, etc.), set up a Notion internal integration:
+
+1. Go to https://www.notion.so/profile/integrations
+2. Click **New integration**
+3. Name: `Agentic Tasks CLI`
+4. Select the workspace that contains your Agentic Tasks databases
+5. Capabilities: **Read content** (minimum required)
+6. Click **Submit** and copy the **Internal Integration Secret** (`ntn_...`)
+
+Then connect the integration to your databases:
+
+1. Open the **Agentic Tasks** parent page in Notion
+2. Click **⋯** menu → **Connections** → **Connect to** → select **Agentic Tasks CLI**
+
+Finally, set the token as an environment variable:
+
+**Claude Code** — add to `~/.claude/settings.json`:
+```json
+{
+  "env": {
+    "NOTION_TOKEN": "ntn_xxxxxxxxxxxxx"
+  }
+}
+```
+
+**Shell profile** — add to `~/.bashrc` or `~/.zshrc`:
+```bash
+export NOTION_TOKEN="ntn_xxxxxxxxxxxxx"
+```
+
+> **Cowork users**: Install the `notion-query` Desktop Extension instead. It stores the token securely in your OS keychain. See the project README for details.
+
+This step is optional — the plugin works without it using MCP-only queries, but server-side filtering is significantly faster for large task databases.
+
 ## Step 6: Verify
 
 Use `AskUserQuestion` to confirm:

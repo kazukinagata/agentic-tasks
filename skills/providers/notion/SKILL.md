@@ -101,9 +101,84 @@ The database ID is stored in the config page as `intakeLogDatabaseId`.
 
 ## Querying Tasks
 
-- Filter by Status: Use `notion-search` with filter params, or `notion-fetch` on `tasksDatabaseId` and post-process
-- Filter Blocked By resolved: post-process by checking that the `Blocked By` relation array is empty OR by fetching each referenced task's Status and confirming all are "Done"
-- Sort by Priority: Urgent > High > Medium > Low; then by Due Date (earliest first)
+Use the first available query path (checked in order):
+
+### Query Path Detection
+
+1. **`execution_environment = "cowork"` AND `notion-query` tool available** → Path 2 (Extension)
+2. **`NOTION_TOKEN` env var set** (check: run `echo $NOTION_TOKEN` via Bash) → Path 1 (API script)
+3. **Otherwise** → Path 3 (MCP fallback)
+
+### Path 1: Notion API Script (requires NOTION_TOKEN)
+
+Call the query script for server-side filtering:
+
+```bash
+bash ${CLAUDE_PLUGIN_ROOT}/skills/providers/notion/scripts/query-tasks.sh \
+  "<tasksDatabaseId>" '<filter_json>' '<sort_json>'
+```
+
+The script returns `{"results": [...]}` with full page objects including all properties.
+
+#### Filter Recipes
+
+**Tasks assigned to a user:**
+```json
+{"property":"Assignees","people":{"contains":"<user_id>"}}
+```
+
+**Ready tasks assigned to a user:**
+```json
+{"and":[{"property":"Status","select":{"equals":"Ready"}},{"property":"Assignees","people":{"contains":"<user_id>"}}]}
+```
+
+**In Progress tasks (for concurrency check):**
+```json
+{"and":[{"property":"Status","select":{"equals":"In Progress"}},{"property":"Assignees","people":{"contains":"<user_id>"}}]}
+```
+
+**Ready tasks by executor and assignee:**
+```json
+{"and":[{"property":"Status","select":{"equals":"Ready"}},{"property":"Executor","select":{"equals":"claude-code"}},{"property":"Assignees","people":{"contains":"<user_id>"}}]}
+```
+
+**Sort by Priority then Due Date:**
+```json
+[{"property":"Priority","direction":"ascending"},{"property":"Due Date","direction":"ascending"}]
+```
+
+### Path 2: notion-query Extension (Cowork)
+
+When the `notion-query` MCP tool is available (installed via Desktop Extension), call it directly:
+
+```
+notion-query({ database_id: "<tasksDatabaseId>", filter: <filter_object>, sorts: <sort_array> })
+```
+
+The tool accepts the same filter/sort objects as Path 1's filter recipes. It returns `{"results": [...]}` with full page objects.
+
+**Build & install:** See `skills/providers/notion/extension/` for source and build instructions.
+
+### Path 3: MCP Fallback (no token, no extension)
+
+Use `notion-search` with `data_source_url` to find task pages, then `notion-fetch` each page individually to get properties. Filter client-side by checking property values.
+
+This is the slowest path — use only when Path 1 and Path 2 are unavailable.
+
+### Post-Processing (all paths)
+
+- **Blocked By resolved**: Check that the `Blocked By` relation array is empty OR fetch each referenced task's Status and confirm all are "Done". This cannot be filtered server-side.
+- **Sort** (if not done server-side): Priority — Urgent > High > Medium > Low; then by Due Date (earliest first).
+
+### Fetch All Tasks
+
+To retrieve all tasks (e.g. for view server data push), use the detected query path with no filter:
+
+- **Path 1**: `bash ${CLAUDE_PLUGIN_ROOT}/skills/providers/notion/scripts/query-tasks.sh "<tasksDatabaseId>"` (no filter/sort args)
+- **Path 2**: `notion-query({ database_id: "<tasksDatabaseId>" })` (no filter/sorts)
+- **Path 3**: `notion-search` with `data_source_url` + `notion-fetch` per page
+
+No post-processing needed (no Blocked By filter, no sort required).
 
 ## Task Record Reference
 
@@ -118,7 +193,7 @@ Notion MCP tools (notion-update-page) are available in both environments.
 
 After any task operation (create, update, delete), push fresh data to the local view server:
 
-1. Retrieve all tasks via `notion-fetch` on the tasks data source URL
+1. Use **Fetch All Tasks** (above) to retrieve all tasks from the tasks database
 2. Format the response as a `TasksResponse` JSON object:
    ```json
    { "tasks": [...], "updatedAt": "<ISO timestamp>" }
