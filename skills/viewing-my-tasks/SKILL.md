@@ -18,10 +18,7 @@ Lists all tasks assigned to the current user (where Assignees contains the user)
 
 ## Step 2: Fetch My Tasks
 
-Query the Tasks DB for all tasks and post-process:
-
-- Filter: `Assignees` contains `current_user.id`
-- If the provider supports server-side people filtering, use it; otherwise fetch all and filter client-side.
+Use the active provider SKILL.md's "Querying Tasks" section to fetch tasks filtered by Assignee = `current_user.id`. The provider determines the optimal query path (API script, Extension, or MCP fallback).
 
 ## Step 3: Display by Status Group
 

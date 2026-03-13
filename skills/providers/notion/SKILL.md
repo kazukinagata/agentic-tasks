@@ -101,9 +101,66 @@ The database ID is stored in the config page as `intakeLogDatabaseId`.
 
 ## Querying Tasks
 
-- Filter by Status: Use `notion-search` with filter params, or `notion-fetch` on `tasksDatabaseId` and post-process
-- Filter Blocked By resolved: post-process by checking that the `Blocked By` relation array is empty OR by fetching each referenced task's Status and confirming all are "Done"
-- Sort by Priority: Urgent > High > Medium > Low; then by Due Date (earliest first)
+Use the first available query path (checked in order):
+
+### Query Path Detection
+
+1. **Cowork + `notion-query` tool available** → Path 2 (Extension)
+2. **`NOTION_TOKEN` env var set** (check: run `echo $NOTION_TOKEN` via Bash) → Path 1 (API script)
+3. **Otherwise** → Path 3 (MCP fallback)
+
+### Path 1: Notion API Script (requires NOTION_TOKEN)
+
+Call the query script for server-side filtering:
+
+```bash
+bash ${CLAUDE_PLUGIN_ROOT}/skills/providers/notion/scripts/query-tasks.sh \
+  "<tasksDatabaseId>" '<filter_json>' '<sort_json>'
+```
+
+The script returns `{"results": [...]}` with full page objects including all properties.
+
+#### Filter Recipes
+
+**Tasks assigned to a user:**
+```json
+{"property":"Assignees","people":{"contains":"<user_id>"}}
+```
+
+**Ready tasks assigned to a user:**
+```json
+{"and":[{"property":"Status","select":{"equals":"Ready"}},{"property":"Assignees","people":{"contains":"<user_id>"}}]}
+```
+
+**In Progress tasks (for concurrency check):**
+```json
+{"and":[{"property":"Status","select":{"equals":"In Progress"}},{"property":"Assignees","people":{"contains":"<user_id>"}}]}
+```
+
+**Ready tasks by executor and assignee:**
+```json
+{"and":[{"property":"Status","select":{"equals":"Ready"}},{"property":"Executor","select":{"equals":"claude-code"}},{"property":"Assignees","people":{"contains":"<user_id>"}}]}
+```
+
+**Sort by Priority then Due Date:**
+```json
+[{"property":"Priority","direction":"ascending"},{"property":"Due Date","direction":"ascending"}]
+```
+
+### Path 2: notion-query Extension (Cowork)
+
+When the `notion-query` MCP tool is available (installed via Desktop Extension), call it with the same filter/sort parameters as Path 1. See the Extension documentation for tool interface details.
+
+### Path 3: MCP Fallback (no token, no extension)
+
+Use `notion-search` with `data_source_url` to find task pages, then `notion-fetch` each page individually to get properties. Filter client-side by checking property values.
+
+This is the slowest path — use only when Path 1 and Path 2 are unavailable.
+
+### Post-Processing (all paths)
+
+- **Blocked By resolved**: Check that the `Blocked By` relation array is empty OR fetch each referenced task's Status and confirm all are "Done". This cannot be filtered server-side.
+- **Sort** (if not done server-side): Priority — Urgent > High > Medium > Low; then by Due Date (earliest first).
 
 ## Task Record Reference
 

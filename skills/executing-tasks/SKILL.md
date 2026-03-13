@@ -28,14 +28,13 @@ If any Core field is missing, follow the active provider SKILL.md's instructions
 
 ### Phase 1: Fetch & Concurrency Check
 
-1. Query tasks where:
-   - Status = "Ready"
-   - Blocked By is empty or all Blocked By tasks are Done (no unresolved dependencies)
-   - Executor = current environment's executor type:
+1. Query Ready tasks using the active provider's "Querying Tasks" section:
+   - Filter: Status = "Ready" AND Executor = current executor type AND Assignees = `current_user.id`
      - `execution_environment = "claude-code"` → Executor = "claude-code"
      - `execution_environment = "cowork"` → Executor = "cowork"
-   - Assignees contains `current_user.id`
-2. Count In Progress tasks with the same filter conditions (Status = "In Progress")
+   - Post-process: Blocked By is empty or all Blocked By tasks are Done (cannot be filtered server-side)
+2. Count In Progress tasks using the same query path:
+   - Filter: Status = "In Progress" AND Executor = current executor type AND Assignees = `current_user.id`
 3. Calculate `available_slots = headless_config.maxConcurrentAgents - in_progress_count` (default: 3)
 4. If `available_slots <= 0`: report "N tasks are in progress (limit: M). Wait for completion or increase maxConcurrentAgents" and stop
 5. Sort by Priority (Urgent > High > Medium > Low), then Due Date ascending

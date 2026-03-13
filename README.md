@@ -147,6 +147,34 @@ Each skill is a self-contained module with a `SKILL.md` that defines its behavio
 
 Currently supports **Notion** as the data source via [Notion MCP](https://mcp.notion.com). The provider abstraction layer (`skills/providers/`) is designed for additional backends (SQLite, Airtable, etc.).
 
+### Notion MCP Limitations & Workarounds
+
+The Notion hosted MCP server (`https://mcp.notion.com/mcp`) has significant querying limitations:
+
+| MCP Tool | Limitation |
+|----------|-----------|
+| `notion-fetch` (database/data source) | Returns **schema only** — no row data. Cannot retrieve task records from a database. |
+| `notion-fetch` (page) | Returns full properties for a **single page**. Requires N+1 calls for N tasks. |
+| `notion-search` | Semantic search returning page IDs + titles + text excerpts. **No property values** (Status, Assignees, etc.) in results. |
+| `notion-create-view` FILTER DSL | `select`, `date`, `text` filters work. **`person` type silently dropped** — the filter is ignored without error. |
+| `notion-fetch` with `?v=<view_id>` | Returns database schema/views metadata, **not filtered row data**. |
+
+**Missing tools** (require Business+ plan with Notion AI, not available on Plus):
+- `notion-query-data-sources` — SQL-like queries with filters, grouping, rollups
+- `notion-query-database-view` — Query using a view's pre-configured filters/sorts
+
+**Result**: Server-side filtering by `Assignees` (people property) is impossible through Notion MCP on the Plus plan. All tasks must be fetched individually and filtered client-side.
+
+#### Workarounds
+
+| Environment | Approach | How it works |
+|------------|----------|-------------|
+| **Claude Code** | `query-tasks.sh` script | Calls Notion REST API directly (`POST /v1/databases/{db_id}/query`) with `curl`. Supports people filters, compound filters, sorts, pagination. Requires `NOTION_TOKEN` env var (internal integration token). |
+| **Cowork** | `.mcpb` Desktop Extension (planned) | Node.js MCP server packaged as a Desktop Extension. Token stored in OS Keychain via `sensitive: true` in manifest. One-click install. |
+| **Fallback** | MCP-only | `notion-search` → individual `notion-fetch` per page → client-side filter. Works without any token but slow for large databases. |
+
+See `skills/providers/notion/SKILL.md` § "Querying Tasks" for implementation details.
+
 ### Task Schema
 
 Tasks have 14 Core fields (auto-repaired if missing) and 11 Extended fields (graceful degradation). Key fields include:
