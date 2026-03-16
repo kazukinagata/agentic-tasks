@@ -3,17 +3,20 @@
 This file contains all Notion-specific implementation details for agentic-tasks.
 Load this file when the active provider is **notion**.
 
-## Database Configuration
+## Config Retrieval
 
-At the start of each session, read the config page to get database IDs:
+When `detecting-provider` requests config retrieval for the Notion provider, follow these steps to populate `headless_config`:
 
-1. Use `notion-search` with query "Agentic Tasks Config" to find the config page
-2. Retrieve the page body using `notion-fetch` with the page URL/ID
-3. Parse the JSON code block to extract:
-   - `tasksDatabaseId`
-   - `teamsDatabaseId`
+1. Search for the "Agentic Tasks Config" page using `notion-search`
+2. Retrieve the page body using `notion-fetch`
+3. Parse the JSON code block and set the following as the `headless_config` session variable:
+   - `tasksDatabaseId` (required)
+   - `teamsDatabaseId` (optional)
+   - `sprintsDatabaseId` (optional — exists after setting-up-scrum)
+   - `maxConcurrentAgents` (optional — default: 3)
+   - `intakeLogDatabaseId` (optional — exists after first ingesting-messages run)
 
-Use these IDs for all subsequent Notion operations.
+If the Config page is not found, instruct the user to run the setting-up-tasks skill, then stop.
 
 ## Schema Validation
 

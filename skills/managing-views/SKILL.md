@@ -189,7 +189,7 @@ interface Task {
   acceptanceCriteria: string;
   status: "Backlog" | "Ready" | "In Progress" | "In Review" | "Done" | "Blocked";
   blockedBy: string[];
-  priority: "Critical" | "High" | "Medium" | "Low";
+  priority: "Urgent" | "High" | "Medium" | "Low";
   executor: string;           // "claude-code" | "cowork" | "human" | custom
   requiresReview: boolean;
   executionPlan: string;
@@ -206,7 +206,7 @@ interface Task {
   parentTaskId: string | null;
   project: string | null;
   team: string | null;
-  assignees: string[];
+  assignees: { id: string; name: string }[];
   url: string;
   complexityScore?: number | null;
   sprintId?: string | null;

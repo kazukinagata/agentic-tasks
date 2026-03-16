@@ -54,17 +54,7 @@ This value is used by downstream skills (executing-tasks, managing-tasks, etc.) 
 After detecting the provider, retrieve database IDs and constants from the Config page.
 **Skip if `headless_config` is already set in this conversation.**
 
-### Notion Provider
-
-1. Search for the "Agentic Tasks Config" page using `notion-search`
-2. Retrieve the page body using `notion-fetch`
-3. Parse the JSON code block and set the following as the `headless_config` session variable:
-   - `tasksDatabaseId` (required)
-   - `teamsDatabaseId` (optional)
-   - `sprintsDatabaseId` (optional — exists after setting-up-scrum)
-   - `maxConcurrentAgents` (optional — default: 3)
-
-If the Config page is not found, instruct the user to run the setting-up-tasks skill, then stop.
+Follow the active provider SKILL.md's Config Retrieval section to populate `headless_config`.
 
 ## Constants
 
