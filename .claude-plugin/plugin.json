@@ -1,6 +1,6 @@
 {
   "name": "agentic-tasks",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "AI-native task management for agents and humans. Natural language CRUD, real-time HTML views (kanban, list), and autonomous task execution. Supports any schema-definable data source.",
   "author": {
     "name": "Kazuki Nagata"
