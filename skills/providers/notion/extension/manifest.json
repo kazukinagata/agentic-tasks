@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "notion-query",
   "display_name": "Notion Query for Agentic Tasks",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Server-side Notion database querying with people property filters. Designed for Agentic Tasks plugin.",
   "author": {
     "name": "Kazuki Nagata"
