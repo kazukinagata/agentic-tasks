@@ -136,7 +136,7 @@ describe("POST /api/data and GET /api/tasks", () => {
     const tasks: Task[] = [
       makeTask({ id: "t1", executor: "claude-code", requiresReview: true }),
       makeTask({ id: "t2", executor: "human", requiresReview: false }),
-      makeTask({ id: "t3", executor: "antigravity", requiresReview: true }),
+      makeTask({ id: "t3", executor: "cowork", requiresReview: true }),
     ];
     const payload: TasksResponse = { tasks, updatedAt: "2026-03-05T12:00:00.000Z" };
 
@@ -153,7 +153,7 @@ describe("POST /api/data and GET /api/tasks", () => {
     const byId = Object.fromEntries(body.tasks.map((t) => [t.id, t]));
     expect(byId["t1"].executor).toBe("claude-code");
     expect(byId["t2"].executor).toBe("human");
-    expect(byId["t3"].executor).toBe("antigravity");
+    expect(byId["t3"].executor).toBe("cowork");
     expect(byId["t2"].requiresReview).toBe(false);
   });
 

@@ -6,7 +6,7 @@ export interface Task {
   status: "Backlog" | "Ready" | "In Progress" | "In Review" | "Done" | "Blocked";
   blockedBy: string[];
   priority: "Urgent" | "High" | "Medium" | "Low" | null;
-  executor: "claude-code" | "cowork" | "antigravity" | "human" | null;
+  executor: "claude-code" | "cowork" | "human" | null;
   requiresReview: boolean;
   executionPlan: string;
   workingDirectory: string;
@@ -23,19 +23,13 @@ export interface Task {
   parentTaskId: string | null;
   project: string | null;
   team: string | null;
-  assignees: Person[];
+  assignees: { id: string; name: string }[];
   url: string;
   // Sprint fields (optional — present only when scrum is enabled)
   sprintId: string | null;
   sprintName: string | null;
   complexityScore: number | null;
   backlogOrder: number | null;
-}
-
-export interface Person {
-  id: string;
-  name: string;
-  avatarUrl: string | null;
 }
 
 export interface TasksResponse {

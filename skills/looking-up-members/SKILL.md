@@ -31,10 +31,11 @@ Given a query string (name or email fragment):
 
 If `org_members` is empty (provider does not support member listing), fall back to TeamsDB:
 
-1. Fetch the Teams database using `teamsDatabaseId` from config.
-2. Collect all unique persons from the `Members` (people-type) field across all teams.
-3. Use this as the search corpus. Cache result in `org_members` for the session.
-4. Apply the same Resolution Algorithm above.
+1. If `teamsDatabaseId` is not in `headless_config`, return empty array `[]` (no fallback available).
+2. Fetch the Teams database using `teamsDatabaseId` from config.
+3. Collect all unique persons from the `Members` (people-type) field across all teams.
+4. Use this as the search corpus. Cache result in `org_members` for the session.
+5. Apply the same Resolution Algorithm above.
 
 ## Caller Responsibility
 

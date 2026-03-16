@@ -14,8 +14,6 @@ This skill provisions the Sprints (Objectives) database and extends the Tasks DB
 
 Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and follow its instructions to determine `active_provider` and retrieve `headless_config`. Skip if already set.
 
-If `headless_config.sprintsDatabaseId` is missing, tell the user to run "set up scrum" first.
-
 ## Idempotency Check
 
 Before doing anything, check if `headless_config.sprintsDatabaseId` already exists.

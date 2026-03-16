@@ -3,17 +3,20 @@
 This file contains all Notion-specific implementation details for agentic-tasks.
 Load this file when the active provider is **notion**.
 
-## Database Configuration
+## Config Retrieval
 
-At the start of each session, read the config page to get database IDs:
+When `detecting-provider` requests config retrieval for the Notion provider, follow these steps to populate `headless_config`:
 
-1. Use `notion-search` with query "Agentic Tasks Config" to find the config page
-2. Retrieve the page body using `notion-fetch` with the page URL/ID
-3. Parse the JSON code block to extract:
-   - `tasksDatabaseId`
-   - `teamsDatabaseId`
+1. Search for the "Agentic Tasks Config" page using `notion-search`
+2. Retrieve the page body using `notion-fetch`
+3. Parse the JSON code block and set the following as the `headless_config` session variable:
+   - `tasksDatabaseId` (required)
+   - `teamsDatabaseId` (optional)
+   - `sprintsDatabaseId` (optional — exists after setting-up-scrum)
+   - `maxConcurrentAgents` (optional — default: 3)
+   - `intakeLogDatabaseId` (optional — exists after first ingesting-messages run)
 
-Use these IDs for all subsequent Notion operations.
+If the Config page is not found, instruct the user to run the setting-up-tasks skill, then stop.
 
 ## Schema Validation
 
@@ -169,6 +172,27 @@ This is the slowest path — use only when Path 1 and Path 2 are unavailable.
 
 - **Blocked By resolved**: Check that the `Blocked By` relation array is empty OR fetch each referenced task's Status and confirm all are "Done". This cannot be filtered server-side.
 - **Sort** (if not done server-side): Priority — Urgent > High > Medium > Low; then by Due Date (earliest first).
+
+### Displaying Task Lists
+
+When displaying queried tasks to the user in list or table format, extract only display-relevant fields to prevent output truncation:
+
+```bash
+bash ${CLAUDE_PLUGIN_ROOT}/skills/providers/notion/scripts/query-tasks.sh \
+  "<tasksDatabaseId>" '<filter_json>' '<sort_json>' | \
+  jq '[.results[] | {
+    id: .id,
+    title: (.properties.Title.title[0].plain_text // ""),
+    status: (.properties.Status.select.name // ""),
+    priority: (.properties.Priority.select.name // ""),
+    executor: (.properties.Executor.select.name // ""),
+    assignees: [.properties.Assignees.people[]?.name] | join(", "),
+    due_date: (.properties["Due Date"].date.start // ""),
+    blocked_by: ([.properties["Blocked By"].relation[]?.id] | length | tostring) + " deps"
+  }]'
+```
+
+For single-task detail views (update, status change), use the full page object.
 
 ### Fetch All Tasks
 

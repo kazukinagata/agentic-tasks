@@ -65,7 +65,7 @@ Unfinished task disposition:
 Use AskUserQuestion for each NOT DONE task (or batch them):
 
 Options:
-- Carry over to next sprint (keep Sprint relation, will be included in next batch)
+- Carry over to next sprint (clear Sprint relation — task returns to backlog for next sprint planning)
 - Return to backlog (clear Sprint relation)
 - Leave as-is (no change)
 
