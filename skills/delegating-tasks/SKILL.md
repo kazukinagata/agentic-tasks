@@ -3,7 +3,8 @@ name: delegating-tasks
 description: >
   Delegates a task to another organization member by updating Assignees,
   resetting executor fields, and recording delegation history in Context.
-  Triggers on: "delegate task", "assign to", "transfer task", "reassign"
+  Triggers on: "delegate task", "assign to", "transfer task", "reassign",
+  "タスク委任", "タスク移管", "割り当て変更"
 user-invocable: true
 ---
 
@@ -74,7 +75,7 @@ Report:
 ```
 Delegation complete: "{task title}" → @{recipient.name}
 Delegation history has been appended to Context.
-The recipient will see this task when they run viewing-my-tasks.
+The recipient will see this task when they run managing-tasks (my tasks).
 ```
 
 ## Field Constraints for Delegated Tasks

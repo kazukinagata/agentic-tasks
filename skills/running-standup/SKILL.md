@@ -4,7 +4,8 @@ description: >
   Generates an automated sprint status report with stall detection and blocked
   task analysis. Replaces human standup format with quantitative metrics.
   Triggers on: "standup", "status report", "agent status",
-  "burn down", "stalled tasks".
+  "burn down", "stalled tasks",
+  "スタンドアップ", "ステータスレポート", "進捗報告".
 ---
 
 # Agentic Tasks — Sprint Standup

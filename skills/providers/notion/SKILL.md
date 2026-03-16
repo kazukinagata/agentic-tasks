@@ -109,7 +109,7 @@ Use the first available query path (checked in order):
 ### Query Path Detection
 
 1. **`execution_environment = "cowork"` AND `notion-query` tool available** → Path 2 (Extension)
-2. **`NOTION_TOKEN` env var set** (check: run `echo $NOTION_TOKEN` via Bash) → Path 1 (API script)
+2. **`NOTION_TOKEN` env var set** (check: run `[ -n "$NOTION_TOKEN" ] && echo "SET" || echo "NOT SET"` via Bash) → Path 1 (API script)
 3. **Otherwise** → Path 3 (MCP fallback)
 
 ### Path 1: Notion API Script (requires NOTION_TOKEN)
@@ -186,9 +186,9 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/providers/notion/scripts/query-tasks.sh \
     status: (.properties.Status.select.name // ""),
     priority: (.properties.Priority.select.name // ""),
     executor: (.properties.Executor.select.name // ""),
-    assignees: [.properties.Assignees.people[]?.name] | join(", "),
+    assignees: ([.properties.Assignees.people[]?.name] | join(", ")),
     due_date: (.properties["Due Date"].date.start // ""),
-    blocked_by: ([.properties["Blocked By"].relation[]?.id] | length | tostring) + " deps"
+    blocked_by: (([.properties["Blocked By"].relation[]?.id] | length | tostring) + " deps")
   }]'
 ```
 
@@ -280,4 +280,4 @@ To determine whether a task is assigned to the current user:
 
 - Fetch the task's `Assignees` property (people type — returns an array of person objects).
 - Check if any element in the array has `id === current_user.id`.
-- Use this check when filtering tasks in `viewing-my-tasks` and `executing-tasks`.
+- Use this check when filtering tasks in `managing-tasks` and `executing-tasks`.

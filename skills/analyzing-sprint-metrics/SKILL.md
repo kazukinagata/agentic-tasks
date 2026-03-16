@@ -3,7 +3,8 @@ name: analyzing-sprint-metrics
 description: >
   Analyzes sprint performance metrics and generates retrospective insights
   from task data. Produces throughput, agent performance, and dependency reports.
-  Triggers on: "sprint metrics", "retrospective", "retro", "agent performance".
+  Triggers on: "sprint metrics", "retrospective", "retro", "agent performance",
+  "スプリントメトリクス", "振り返り", "レトロ".
 ---
 
 # Agentic Tasks — Sprint Metrics

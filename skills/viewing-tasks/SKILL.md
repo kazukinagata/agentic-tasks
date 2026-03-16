@@ -4,7 +4,8 @@ description: >
   Manages the local view server that renders task data as interactive HTML pages
   (Kanban, List, Calendar, Gantt). Starts the server, pushes data, and opens views.
   Triggers on: "kanban", "list view", "show tasks", "view", "visualize",
-  "gantt", "calendar".
+  "gantt", "calendar",
+  "カンバン", "リスト表示", "タスク表示", "ガント", "カレンダー".
 ---
 
 # Agentic Tasks — View Server

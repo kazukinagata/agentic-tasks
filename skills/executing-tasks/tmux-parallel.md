@@ -113,7 +113,7 @@ Monitoring:
   tmux attach -t agentic-tasks-<ts>         (from outside tmux)
   tmux switch-client -t agentic-tasks-<ts>  (from inside tmux)
 
-Check completion status: /viewing-my-tasks  or  ls /tmp/agentic-tasks/agentic-tasks-<ts>/
+Check completion status: /managing-tasks (my tasks)  or  ls /tmp/agentic-tasks/agentic-tasks-<ts>/
 ```
 
 The Orchestrator exits here. Each Sub-Agent runs independently and handles its own completion.

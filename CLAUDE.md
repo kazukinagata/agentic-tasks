@@ -20,11 +20,10 @@ skills/
 ├── providers/notion/      # Notion-specific implementation (SKILL.md + setup.md)
 ├── setting-up-tasks/      # Initial plugin setup and MCP configuration
 ├── setting-up-scrum/      # Provisions Sprints DB and sprint-related fields
-├── managing-tasks/        # Task CRUD with guided creation, state transitions, "next task" logic
+├── managing-tasks/        # Task CRUD + personal task dashboard
 ├── managing-sprints/      # Sprint lifecycle, backlog ordering, sprint planning
 ├── executing-tasks/       # Task dispatch orchestration (single, tmux parallel, Cowork)
 ├── viewing-tasks/         # Local view server management (start, push data, open browser)
-├── viewing-my-tasks/      # Display tasks assigned to current user
 ├── delegating-tasks/      # Reassign tasks to other org members
 ├── ingesting-messages/    # Auto-convert Slack/Teams DMs into tasks
 ├── running-standup/       # Automated sprint status report with stall detection
@@ -122,6 +121,7 @@ Skills with `user-invocable: false` are shared skills loaded by other skills (e.
 ## Key Conventions
 
 - All natural language in the project (SKILL.md, comments, scripts, docs) must be in English
+  - Exception: skill description front-matter may include non-English trigger phrases for multilingual invocation
 - Each skill must be self-contained: scripts and resources live within the skill's own directory
 - No cross-references between skills (one skill's SKILL.md must not directly load another skill's SKILL.md by path). Shared logic is extracted into shared skills (`user-invocable: false`)
 - Provider-specific logic belongs in `skills/providers/{name}/`
