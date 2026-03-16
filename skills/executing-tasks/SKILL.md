@@ -5,7 +5,8 @@ description: >
   or Cowork scheduled tasks. Fetches ready tasks, validates working directories,
   and dispatches to the chosen execution mode.
   Triggers on: "do the next task", "process tasks",
-  "execute tasks", "ready tasks".
+  "execute tasks", "ready tasks",
+  "タスク実行", "次のタスクを実行", "タスク処理".
 user-invocable: true
 ---
 

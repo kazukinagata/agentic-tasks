@@ -50,7 +50,7 @@ Created N Cowork Scheduled Tasks:
 - api-tests-def6 → <Working Directory value from task>
 
 Run each task from the Cowork Scheduled Tasks screen.
-Check completion status: /viewing-my-tasks
+Check completion status: /managing-tasks (my tasks)
 ```
 
 For each task, read the **Working Directory** field and display it in the report. If the field is empty, show the current repository root as the default.

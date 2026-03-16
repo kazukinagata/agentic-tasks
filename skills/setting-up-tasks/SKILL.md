@@ -4,7 +4,8 @@ description: >
   Guides initial setup of the Agentic Tasks plugin — detects or configures
   MCP connections and runs provider-specific database initialization.
   Triggers on: "setup agentic tasks", "initialize task management",
-  "configure notion tasks", "configure data source".
+  "configure notion tasks", "configure data source",
+  "タスク管理セットアップ", "タスク管理初期化".
 ---
 
 # Agentic Tasks — Setup Guide

@@ -3,7 +3,8 @@ name: reviewing-sprint
 description: >
   Generates an automated batch completion summary and closes the active sprint.
   Reviews done/undone tasks, calculates velocity, and handles unfinished task disposition.
-  Triggers on: "sprint review", "batch complete", "end sprint", "close sprint".
+  Triggers on: "sprint review", "batch complete", "end sprint", "close sprint",
+  "スプリントレビュー", "スプリント終了".
 ---
 
 # Agentic Tasks — Sprint Review

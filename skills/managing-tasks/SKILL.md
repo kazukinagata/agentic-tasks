@@ -3,9 +3,16 @@ name: managing-tasks
 description: >
   Creates, updates, deletes, and queries tasks in the configured data source.
   Handles task creation with required confirmations, state transitions,
-  complexity scoring, and "next task" recommendations.
+  complexity scoring, "next task" recommendations, and personal task dashboard.
   Triggers on: "add task", "create task", "update task", "done", "change status",
-  "list tasks", "what's next", "next task", "block", "assign", "prioritize".
+  "list tasks", "what's next", "next task", "block", "assign", "prioritize",
+  "show tasks", "get tasks", "fetch tasks", "my tasks", "assigned to me",
+  "show my tasks", "what are my tasks",
+  "タスク追加", "タスク作成", "タスク更新", "完了", "ステータス変更",
+  "タスク一覧", "タスクを見せて", "次のタスク", "自分のタスク", "私のタスク",
+  "担当タスク", "タスク取得".
+  Use this skill for ANY task-related query including listing tasks for specific
+  people or filtering by status/priority.
 ---
 
 # Agentic Tasks — Task Management
@@ -239,6 +246,60 @@ curl -s http://localhost:3456/api/health -o /dev/null 2>/dev/null && \
 ```
 
 Sprints JSON format: `{ "sprints": [...], "currentSprintId": "<active_sprint_id_or_null>", "updatedAt": "<ISO>" }`
+
+## My Tasks View
+
+When the user asks "my tasks", "assigned to me", "show my tasks", or similar:
+
+### Step 1: Provider Detection + Identity Resolve
+
+1. Load `${CLAUDE_PLUGIN_ROOT}/skills/detecting-provider/SKILL.md` and determine `active_provider`. Skip if already set.
+2. Load `${CLAUDE_PLUGIN_ROOT}/skills/resolving-identity/SKILL.md` and resolve `current_user`. Skip if already set.
+
+### Step 2: Fetch My Tasks
+
+Use the active provider SKILL.md's "Querying Tasks" section to fetch tasks filtered by Assignee = `current_user.id`. The provider determines the optimal query path.
+
+### Step 3: Display by Status Group
+
+Group tasks by Status and display in the following order:
+
+#### In Progress
+For each task, show:
+- Title, Priority
+- Executor / Session Reference (display as-is if present: whether tmux session name or cowork:xxx)
+- `Dispatched At` (if set)
+
+#### Ready
+Group by `Executor`:
+- **claude-code**: ready for autonomous execution
+- **cowork**: ready for Cowork agent
+- **human**: waiting for manual action
+
+#### Blocked
+For each task, show the blocking task titles (from `Blocked By` relation).
+
+#### In Review
+List tasks awaiting review.
+
+#### Backlog
+List titles only (collapsed to keep output concise).
+
+#### Sprint Context
+If `sprintsDatabaseId` is in config and an Active Sprint exists:
+- Mark sprint tasks with `[Sprint]` prefix.
+- Show sprint tasks first within each status group.
+
+### Step 4: Next Actions
+
+After displaying the task list, suggest next actions:
+
+```
+Next actions:
+- Execute tasks: /executing-tasks
+- Manage tasks (reassign, change status, etc.): /managing-tasks
+- Delegate tasks: /delegating-tasks
+```
 
 ## Language
 

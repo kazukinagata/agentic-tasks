@@ -4,7 +4,8 @@ description: >
   Reads incoming messages (Slack, Teams, Discord) addressed to the current user
   and auto-converts them into categorized Notion tasks (hearing-needed, self-action,
   or delegate). Designed for daily scheduled execution.
-  Triggers on: "message intake", "intake", "process messages"
+  Triggers on: "message intake", "intake", "process messages",
+  "メッセージ取り込み", "メッセージ処理"
 user-invocable: true
 ---
 

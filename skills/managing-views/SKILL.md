@@ -3,7 +3,8 @@ name: managing-views
 description: >
   Creates, lists, deletes, and regenerates custom task visualizations.
   Triggers on: "create view", "custom view", "make a dashboard", "view of",
-  "delete view", "list views", "regenerate view", "my view".
+  "delete view", "list views", "regenerate view", "my view",
+  "ビュー作成", "カスタムビュー", "ダッシュボード作成".
 user-invocable: true
 ---
 

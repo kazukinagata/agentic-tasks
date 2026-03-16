@@ -3,7 +3,8 @@ name: setting-up-scrum
 description: >
   Provisions the Sprints database and extends the Tasks DB with sprint-related
   fields (Sprint relation, Complexity Score, Backlog Order). Idempotent and opt-in.
-  Triggers on: "set up scrum", "enable scrum", "add scrum", "set up sprints".
+  Triggers on: "set up scrum", "enable scrum", "add scrum", "set up sprints",
+  "スクラム設定", "スプリント設定".
 ---
 
 # Agentic Tasks — Scrum Setup

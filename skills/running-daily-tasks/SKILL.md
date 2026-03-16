@@ -3,7 +3,8 @@ name: running-daily-tasks
 description: >
   Unified daily routine: ingests messages into tasks, then guides user through
   task refinement and dispatch. Works in both Claude Code and Cowork.
-  Triggers on: "daily tasks", "daily routine", "run daily tasks"
+  Triggers on: "daily tasks", "daily routine", "run daily tasks",
+  "デイリータスク", "日次ルーティン"
 user-invocable: true
 ---
 

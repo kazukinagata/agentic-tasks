@@ -130,7 +130,6 @@ skills/
 ├── managing-sprints/         # Sprint lifecycle and backlog
 ├── executing-tasks/          # Task dispatch orchestration
 ├── viewing-tasks/            # Local view server (Hono + SSE)
-├── viewing-my-tasks/         # Personal task dashboard
 ├── delegating-tasks/         # Task reassignment
 ├── ingesting-messages/       # Message-to-task conversion
 ├── running-standup/          # Sprint status reports

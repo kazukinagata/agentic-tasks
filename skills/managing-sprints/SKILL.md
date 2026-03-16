@@ -7,7 +7,8 @@ description: >
   "sprint planning", "end sprint", "close sprint", "sprint status",
   "what's in this sprint", "show sprint", "sprint backlog", "add to sprint",
   "show backlog", "product backlog", "reorder backlog", "reprioritize",
-  "backlog order".
+  "backlog order",
+  "スプリント開始", "スプリント計画", "スプリント状況", "バックログ".
 ---
 
 # Agentic Tasks — Sprint Management
