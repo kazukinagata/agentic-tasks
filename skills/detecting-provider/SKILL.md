@@ -15,15 +15,19 @@ Inspect which MCP tools are available:
 - `mcp__airtable__*` tools present → active_provider = **airtable**
 - SQLite/database tools present → active_provider = **sqlite**
 
-If exactly one provider MCP is detected, use it. Load
-`${CLAUDE_PLUGIN_ROOT}/skills/providers/{active_provider}/SKILL.md` if available, then continue.
+If exactly one provider MCP is detected, use it.
+
+**REQUIRED — Read `${CLAUDE_PLUGIN_ROOT}/skills/providers/{active_provider}/SKILL.md` now.**
+This file contains query method selection logic (Query Path Detection) and data operation procedures.
+Skipping this step causes incorrect query paths and suboptimal performance.
+Do NOT use MCP search/fetch tools for task queries until you have read the provider SKILL.md.
 
 ## Layer 2: Conflict Resolution (multiple provider MCPs detected)
 If multiple provider MCPs are detected, determine the environment:
 - **Claude Code**: Check `env.AGENTIC_TASKS_PROVIDER` in `~/.claude/settings.json`
 - **Cowork / Global Instructions**: Look for `AGENTIC_TASKS_PROVIDER: <value>` in the Global Instructions or CLAUDE.md
 
-If a value is found, use it as active_provider and load the corresponding provider SKILL.md.
+If a value is found, use it as active_provider. **REQUIRED — Read the corresponding provider SKILL.md** (same instruction as Layer 1).
 
 ## Layer 3: Ask User
 If provider is still undetermined, use AskUserQuestion:
