@@ -108,7 +108,7 @@ Use the first available query path (checked in order):
 
 ### Query Path Detection
 
-1. **`execution_environment = "cowork"` AND `notion-query` tool available** → Path 2 (Extension)
+1. **`execution_environment = "cowork"` AND `mcp__Notion_Query_for_Agentic_Tasks__notion-query` tool available** → Path 2 (Extension)
 2. **`NOTION_TOKEN` env var set** (check: run `[ -n "$NOTION_TOKEN" ] && echo "SET" || echo "NOT SET"` via Bash) → Path 1 (API script)
 3. **Otherwise** → Path 3 (MCP fallback)
 
@@ -155,7 +155,7 @@ The script returns `{"results": [...]}` with full page objects including all pro
 When the `notion-query` MCP tool is available (installed via Desktop Extension), call it directly:
 
 ```
-notion-query({ database_id: "<tasksDatabaseId>", filter: <filter_object>, sorts: <sort_array> })
+mcp__Notion_Query_for_Agentic_Tasks__notion-query({ database_id: "<tasksDatabaseId>", filter: <filter_object>, sorts: <sort_array> })
 ```
 
 The tool accepts the same filter/sort objects as Path 1's filter recipes. It returns `{"results": [...]}` with full page objects.
@@ -199,7 +199,7 @@ For single-task detail views (update, status change), use the full page object.
 To retrieve all tasks (e.g. for view server data push), use the detected query path with no filter:
 
 - **Path 1**: `bash ${CLAUDE_PLUGIN_ROOT}/skills/providers/notion/scripts/query-tasks.sh "<tasksDatabaseId>"` (no filter/sort args)
-- **Path 2**: `notion-query({ database_id: "<tasksDatabaseId>" })` (no filter/sorts)
+- **Path 2**: `mcp__Notion_Query_for_Agentic_Tasks__notion-query({ database_id: "<tasksDatabaseId>" })` (no filter/sorts)
 - **Path 3**: `notion-search` with `data_source_url` + `notion-fetch` per page
 
 No post-processing needed (no Blocked By filter, no sort required).
