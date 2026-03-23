@@ -41,11 +41,7 @@ d. **Check Teams DB entries**:
    - 0 entries → Guide the user to Step 4c (Register Initial Teams) of the normal setup flow.
    - 1+ entries → Display team list and ask if any updates are needed.
 
-e. **Check Sprints DB Team relation**: If `sprintsDatabaseId` exists in config:
-   - Fetch the Sprints DB schema via `notion-fetch`.
-   - If no `Team` field exists → add it: `ADD COLUMN "Team" RELATION('<TEAMS_DS_ID>')`
-
-f. **Tasks DB Team relation**: If a `Team` relation field exists on the Tasks DB:
+e. **Tasks DB Team relation**: If a `Team` relation field exists on the Tasks DB:
    - Inform: "The Team field on Tasks is no longer used by the plugin. It will remain in Notion but the plugin will not read or write it."
 
 g. **Update Config JSON**: Remove `selfUserId` and `projectsDatabaseId` from the JSON code block via `notion-update-page`.
@@ -164,7 +160,7 @@ Add the following relations in separate calls:
    c. If a name is ambiguous (multiple matches), use AskUserQuestion to confirm which member.
    d. Create the team page in Teams DB via `notion-create-pages`: Name = team name, Members = resolved user IDs.
    e. Ask: "Would you like to add another team?" and repeat if yes.
-3. Recommend at least 1 team. If 0 teams are registered, warn: "No teams registered. Team-scoped features (sprint planning, standup, etc.) will not filter by team."
+3. Recommend at least 1 team. If 0 teams are registered, warn: "No teams registered. Team-scoped features will not filter by team."
 
 ## Step 5: Create Config Page
 

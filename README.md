@@ -8,8 +8,6 @@ AI-native task management plugin for [Claude Code](https://claude.ai/code) and [
 - **Real-time Views** — Kanban, List, Calendar, and Gantt views served locally at `http://localhost:3456` with live updates via SSE (Claude Code)
 - **Autonomous Execution** — Dispatch tasks to parallel tmux sessions (Claude Code) or Scheduled Tasks (Cowork)
 - **Daily Routine** — Unified daily message intake + task refinement + dispatch (Claude Code and Cowork)
-- **Sprint Management** — Objective-based sprints with backlog ordering, velocity tracking, and automated retrospectives
-- **Stall Detection** — Automatic detection of stuck agents based on complexity-aware time thresholds
 - **Message Intake** — Auto-convert Slack/Teams DMs into categorized tasks
 - **Provider Abstraction** — Pluggable data source layer (Notion supported, more planned)
 
@@ -64,14 +62,6 @@ After installing the plugin, you need to connect a Notion workspace as the data 
 
 > **Cowork users**: The setup skill also offers to register a daily routine as a Scheduled Task that automatically ingests messages and dispatches tasks each morning.
 
-### Optional: Enable Scrum
-
-```
-/setting-up-scrum
-```
-
-This creates a Sprints database and adds sprint-related fields (Sprint, Complexity Score, Backlog Order) to your Tasks database.
-
 ## Usage
 
 ### Task Management
@@ -100,16 +90,6 @@ This creates a Sprints database and adds sprint-related fields (Sprint, Complexi
 | "do the next task" | Execute the top-priority task |
 | "daily tasks" | Run daily routine: message intake + task refinement + dispatch |
 
-### Sprint Workflow
-
-| Command | Description |
-|---------|-------------|
-| "start sprint" | Plan and start a new sprint |
-| "sprint status" | View current sprint progress |
-| "standup" | Generate automated status report |
-| "end sprint" | Review and close the active sprint |
-| "retro" | Analyze sprint metrics |
-
 ### Message Intake
 
 | Command | Description |
@@ -125,17 +105,12 @@ skills/
 ├── looking-up-members/       # Member lookup (shared)
 ├── providers/notion/         # Notion-specific implementation
 ├── setting-up-tasks/         # Initial setup wizard
-├── setting-up-scrum/         # Sprint infrastructure setup
 ├── managing-tasks/           # Task CRUD and state transitions
-├── managing-sprints/         # Sprint lifecycle and backlog
 ├── executing-tasks/          # Task dispatch orchestration
 ├── viewing-tasks/            # Local view server (Hono + SSE)
 ├── delegating-tasks/         # Task reassignment
 ├── ingesting-messages/       # Message-to-task conversion
-├── running-standup/          # Sprint status reports
-├── running-daily-tasks/      # Unified daily routine: message intake + task refinement + dispatch
-├── reviewing-sprint/         # Sprint close and velocity
-└── analyzing-sprint-metrics/ # Retrospective analytics
+└── running-daily-tasks/      # Unified daily routine: message intake + task refinement + dispatch
 agents/
 └── task-agent.md             # Agent definition for autonomous task execution
 ```
@@ -176,13 +151,12 @@ See `skills/providers/notion/SKILL.md` § "Querying Tasks" for implementation de
 
 ### Task Schema
 
-Tasks have 14 Core fields (auto-repaired if missing) and 11 Extended fields (graceful degradation). Key fields include:
+Tasks have 14 Core fields (auto-repaired if missing) and 8 Extended fields (graceful degradation). Key fields include:
 
 - **Status**: Backlog → Ready → In Progress → In Review → Done (or Blocked)
 - **Executor**: `claude-code` / `cowork` / `human`
 - **Priority**: Urgent / High / Medium / Low
 - **Blocked By**: Dependency relation for automatic execution ordering
-- **Complexity Score**: Fibonacci-like score (1–13) for stall detection and velocity tracking
 
 ## License
 
