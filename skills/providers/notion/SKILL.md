@@ -12,7 +12,6 @@ When `detecting-provider` requests config retrieval for the Notion provider, fol
 3. Parse the JSON code block and set the following as the `headless_config` session variable:
    - `tasksDatabaseId` (required)
    - `teamsDatabaseId` (optional)
-   - `sprintsDatabaseId` (optional — exists after setting-up-scrum)
    - `maxConcurrentAgents` (optional — default: 3)
    - `intakeLogDatabaseId` (optional — exists after first ingesting-messages run)
 

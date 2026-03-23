@@ -90,9 +90,6 @@ CREATE TABLE IF NOT EXISTS tasks (
   project TEXT,
   team TEXT,
   assignees TEXT DEFAULT '[]',
-  complexity_score INTEGER,
-  backlog_order INTEGER,
-  sprint_id TEXT,
   branch TEXT DEFAULT '',
   source_message_id TEXT,
   created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
@@ -111,21 +108,9 @@ CREATE TABLE IF NOT EXISTS teams (
   members TEXT DEFAULT '[]'
 );
 
-CREATE TABLE IF NOT EXISTS sprints (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-  name TEXT NOT NULL,
-  goal TEXT DEFAULT '',
-  status TEXT DEFAULT 'Planning' CHECK(status IN ('Planning','Active','Completed','Closed')),
-  max_concurrent_agents INTEGER DEFAULT 3,
-  velocity INTEGER,
-  team_id TEXT REFERENCES teams(id),
-  created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-);
-
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
 CREATE INDEX IF NOT EXISTS idx_tasks_executor ON tasks(executor);
-CREATE INDEX IF NOT EXISTS idx_tasks_sprint ON tasks(sprint_id);
 
 CREATE TABLE IF NOT EXISTS intake_log (
   message_id TEXT PRIMARY KEY,
@@ -146,7 +131,7 @@ sqlite3 /tmp/waggle-test.db ".tables"
 rm /tmp/waggle-test.db
 ```
 
-Expected output includes: `intake_log  sprints  task_dependencies  tasks  teams`
+Expected output includes: `intake_log  task_dependencies  tasks  teams`
 
 - [ ] **Step 4: Commit**
 
@@ -248,9 +233,6 @@ sqlite3 -json "$DB_PATH" "$SQL" | jq '{
     project: .project,
     team: .team,
     assignees: (.assignees | if . == null or . == "" then [] else (try fromjson catch []) end),
-    complexity_score: .complexity_score,
-    backlog_order: .backlog_order,
-    sprint_id: .sprint_id,
     branch: .branch,
     source_message_id: .source_message_id,
     blocked_by: (.blocked_by_ids | if . == null or . == "" then [] else split(",") end),
@@ -316,7 +298,6 @@ When `detecting-provider` requests config retrieval for the SQLite provider:
 2. Parse and set the following as the `headless_config` session variable:
    - `dbPath` (required) — path to the SQLite database file
    - `teamsDatabaseExists` (optional — true if teams table has rows)
-   - `sprintsDatabaseExists` (optional — true if sprints table has rows)
    - `maxConcurrentAgents` (optional — default: 3)
 
 If `~/.waggle/config.json` is not found, instruct the user to run the **setting-up-tasks** skill, then stop.
@@ -329,7 +310,7 @@ After loading config, verify the database exists and has the correct schema:
 sqlite3 "<dbPath>" ".tables"
 ```
 
-Expected tables: `tasks`, `task_dependencies`, `teams`, `sprints`, `intake_log`.
+Expected tables: `tasks`, `task_dependencies`, `teams`, `intake_log`.
 
 If any table is missing, run the init script to auto-repair:
 
@@ -466,8 +447,7 @@ TASKS_JSON=$(bash ${CLAUDE_PLUGIN_ROOT}/skills/providers/sqlite/scripts/query-ta
   workingDirectory: .working_directory, sessionReference: .session_reference,
   dispatchedAt: .dispatched_at, agentOutput: .agent_output, errorMessage: .error_message,
   context, artifacts, repository, dueDate: .due_date, tags, parentTaskId: .parent_task_id,
-  project, team, assignees, url: "", sprintId: .sprint_id, sprintName: null,
-  complexityScore: .complexity_score, backlogOrder: .backlog_order
+  project, team, assignees, url: ""
 }], updatedAt: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))}')
 
 curl -s http://localhost:3456/api/health -o /dev/null 2>/dev/null && \
@@ -901,9 +881,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
     project TEXT,
     team TEXT,
     assignees TEXT DEFAULT '[]',
-    complexity_score INTEGER,
-    backlog_order INTEGER,
-    sprint_id TEXT,
     branch TEXT DEFAULT '',
     source_message_id TEXT,
     created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
@@ -919,16 +896,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
     name TEXT NOT NULL,
     members TEXT DEFAULT '[]'
   )" \
-  "CREATE TABLE IF NOT EXISTS sprints (
-    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-    name TEXT NOT NULL,
-    goal TEXT DEFAULT '',
-    status TEXT DEFAULT 'Planning' CHECK(status IN ('Planning','Active','Completed','Closed')),
-    max_concurrent_agents INTEGER DEFAULT 3,
-    velocity INTEGER,
-    team_id TEXT REFERENCES teams(id),
-    created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-  )" \
   "CREATE TABLE IF NOT EXISTS intake_log (
     message_id TEXT PRIMARY KEY,
     tool_name TEXT CHECK(tool_name IN ('slack','teams','discord')),
@@ -936,8 +903,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
   )" \
   "CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)" \
   "CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority)" \
-  "CREATE INDEX IF NOT EXISTS idx_tasks_executor ON tasks(executor)" \
-  "CREATE INDEX IF NOT EXISTS idx_tasks_sprint ON tasks(sprint_id)" > /dev/null
+  "CREATE INDEX IF NOT EXISTS idx_tasks_executor ON tasks(executor)" > /dev/null
 
 echo "Turso database initialized."
 ```
@@ -1016,9 +982,6 @@ echo "$RESPONSE" | jq '
       project: .project,
       team: .team,
       assignees: (.assignees | if . == null or . == "" then [] else (try fromjson catch []) end),
-      complexity_score: .complexity_score,
-      backlog_order: .backlog_order,
-      sprint_id: .sprint_id,
       branch: .branch,
       source_message_id: .source_message_id,
       blocked_by: (.blocked_by_ids | if . == null or . == "" then [] else split(",") end),
@@ -1072,7 +1035,6 @@ When `detecting-provider` requests config retrieval for the Turso provider:
    - `tursoUrl` (required) — Turso database HTTP URL
    - `tursoAuthToken` (required) — Turso auth token
    - `teamsDatabaseExists` (optional)
-   - `sprintsDatabaseExists` (optional)
    - `maxConcurrentAgents` (optional — default: 3)
 3. Set environment variables for scripts:
    ```bash
@@ -1091,7 +1053,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/providers/turso/scripts/turso-exec.sh \
   "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
 ```
 
-Expected tables: `intake_log`, `sprints`, `task_dependencies`, `tasks`, `teams`.
+Expected tables: `intake_log`, `task_dependencies`, `tasks`, `teams`.
 
 If any table is missing, run init:
 ```bash
@@ -1161,8 +1123,7 @@ TASKS_JSON=$(bash ${CLAUDE_PLUGIN_ROOT}/skills/providers/turso/scripts/query-tas
   workingDirectory: .working_directory, sessionReference: .session_reference,
   dispatchedAt: .dispatched_at, agentOutput: .agent_output, errorMessage: .error_message,
   context, artifacts, repository, dueDate: .due_date, tags, parentTaskId: .parent_task_id,
-  project, team, assignees, url: "", sprintId: .sprint_id, sprintName: null,
-  complexityScore: .complexity_score, backlogOrder: .backlog_order
+  project, team, assignees, url: ""
 }], updatedAt: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))}')
 
 curl -s http://localhost:3456/api/health -o /dev/null 2>/dev/null && \

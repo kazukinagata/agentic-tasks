@@ -19,17 +19,12 @@ skills/
 ├── looking-up-members/    # (shared, not user-invocable) Member name/email → provider user ID
 ├── providers/notion/      # Notion-specific implementation (SKILL.md + setup.md)
 ├── setting-up-tasks/      # Initial plugin setup and MCP configuration
-├── setting-up-scrum/      # Provisions Sprints DB and sprint-related fields
 ├── managing-tasks/        # Task CRUD + personal task dashboard
-├── managing-sprints/      # Sprint lifecycle, backlog ordering, sprint planning
 ├── executing-tasks/       # Task dispatch orchestration (single, tmux parallel, Cowork)
 ├── viewing-tasks/         # Local view server management (start, push data, open browser)
 ├── delegating-tasks/      # Reassign tasks to other org members
 ├── ingesting-messages/    # Auto-convert Slack/Teams DMs into tasks
-├── running-standup/       # Automated sprint status report with stall detection
-├── running-daily-tasks/   # Unified daily routine: message ingestion + task refinement + dispatch
-├── reviewing-sprint/      # Sprint close: velocity calculation, unfinished task disposition
-└── analyzing-sprint-metrics/ # Retrospective metrics and agent performance analysis
+└── running-daily-tasks/   # Unified daily routine: message ingestion + task refinement + dispatch
 ```
 
 ### Skill Dependency Flow
@@ -60,12 +55,12 @@ Tasks can be executed in three modes:
 
 ### Task Schema
 
-Tasks have 14 Core fields (auto-repaired if missing) and 11 Extended fields (graceful degradation). Key fields: Status (Backlog/Ready/In Progress/In Review/Done/Blocked), Executor (claude-code/cowork/human), Priority, Blocked By (dependency relation), Complexity Score.
+Tasks have 14 Core fields (auto-repaired if missing) and 8 Extended fields (graceful degradation). Key fields: Status (Backlog/Ready/In Progress/In Review/Done/Blocked), Executor (claude-code/cowork/human), Priority, Blocked By (dependency relation).
 
 #### State Transitions
 
 ```
-Backlog → Ready       (requires description + acceptance criteria + assignees + execution plan; calculates Complexity Score)
+Backlog → Ready       (requires description + acceptance criteria + assignees + execution plan)
 Ready → In Progress   (dispatch to executor)
 In Progress → In Review  (if Requires Review is on)
 In Progress → Done       (if Requires Review is off)
@@ -126,8 +121,7 @@ Skills with `user-invocable: false` are shared skills loaded by other skills (e.
 - No cross-references between skills (one skill's SKILL.md must not directly load another skill's SKILL.md by path). Shared logic is extracted into shared skills (`user-invocable: false`)
 - Provider-specific logic belongs in `skills/providers/{name}/`
 - The `CLAUDE_PLUGIN_ROOT` variable points to this repository root at runtime
-- Stall detection constants: `stallThresholdMultiplier=4`, `stallDefaultHours=24` (defined in detecting-provider)
-- `maxConcurrentAgents` defaults to 3 (configurable per sprint)
+- `maxConcurrentAgents` defaults to 3 (configurable in plugin config)
 
 ## Semantic Versioning
 
