@@ -21,7 +21,7 @@ If the Config page is not found, instruct the user to run the setting-up-tasks s
 
 After loading config, verify Core fields by calling `notion-fetch` with `tasksDatabaseId` and inspecting the returned schema's `properties` object.
 
-Required Core fields: `Title`, `Description`, `Acceptance Criteria`, `Status`, `Blocked By`, `Priority`, `Executor`, `Requires Review`, `Execution Plan`, `Working Directory`, `Session Reference`, `Dispatched At`, `Agent Output`, `Error Message`.
+Required Core fields (15): `Title`, `Description`, `Acceptance Criteria`, `Status`, `Blocked By`, `Priority`, `Executor`, `Requires Review`, `Execution Plan`, `Working Directory`, `Session Reference`, `Dispatched At`, `Agent Output`, `Error Message`, `Issuer`.
 
 ### Auto-Repair (Missing Fields)
 
@@ -35,6 +35,7 @@ Then run the appropriate DDL (one `ADD COLUMN` per call):
 | Priority | `ADD COLUMN "Priority" SELECT('Urgent':red, 'High':orange, 'Medium':yellow, 'Low':blue)` |
 | Executor | `ADD COLUMN "Executor" SELECT('claude-code':purple, 'cowork':green, 'human':gray)` |
 | Dispatched At / Due Date | `ADD COLUMN "<field>" DATE` |
+| Issuer | `ADD COLUMN "Issuer" PERSON` |
 | (other text fields) | `ADD COLUMN "<field>" RICH_TEXT` |
 
 After repair, re-verify and continue. **Never ask the user to manually fix the schema.**
@@ -49,7 +50,7 @@ After repair, re-verify and continue. **Never ask the user to manually fix the s
 
 ## Schema: Notion Property → Canonical Role
 
-### Core Fields (required — verify existence at session start)
+### Core Fields (15 required — verify existence at session start)
 
 | Property | Notion Type | Canonical Role | Notes |
 |---|---|---|---|
@@ -67,6 +68,7 @@ After repair, re-verify and continue. **Never ask the user to manually fix the s
 | Dispatched At | date | `task_dispatched_at` | Dispatch timestamp. Used for timeout detection |
 | Agent Output | rich_text | `task_agent_output` | Execution result |
 | Error Message | rich_text | `task_error_message` | Written on failure only. Query with "Error Message is not empty" |
+| Issuer | people | `task_issuer` | Who created/initiated this task. Auto-populated with current_user. Write-once. |
 
 ### Extended Fields (optional — graceful degradation if absent)
 
@@ -147,6 +149,16 @@ The script returns `{"results": [...]}` with full page objects including all pro
 **Sort by Priority then Due Date:**
 ```json
 [{"property":"Priority","direction":"ascending"},{"property":"Due Date","direction":"ascending"}]
+```
+
+**Blocked tasks owned by user (via Assignees OR Issuer fallback):**
+```json
+{"and":[{"property":"Status","select":{"equals":"Blocked"}},{"or":[{"property":"Assignees","people":{"contains":"<user_id>"}},{"and":[{"property":"Issuer","people":{"contains":"<user_id>"}},{"property":"Assignees","people":{"is_empty":true}}]}]}]}
+```
+
+**Ready human tasks owned by user (via Assignees OR Issuer fallback):**
+```json
+{"and":[{"property":"Status","select":{"equals":"Ready"}},{"property":"Executor","select":{"equals":"human"}},{"or":[{"property":"Assignees","people":{"contains":"<user_id>"}},{"and":[{"property":"Issuer","people":{"contains":"<user_id>"}},{"property":"Assignees","people":{"is_empty":true}}]}]}]}
 ```
 
 ### Path 2: notion-query Extension (Cowork)
