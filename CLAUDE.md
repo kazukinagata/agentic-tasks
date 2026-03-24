@@ -55,7 +55,7 @@ Tasks can be executed in three modes:
 
 ### Task Schema
 
-Tasks have 14 Core fields (auto-repaired if missing) and 8 Extended fields (graceful degradation). Key fields: Status (Backlog/Ready/In Progress/In Review/Done/Blocked), Executor (claude-code/cowork/human), Priority, Blocked By (dependency relation).
+Tasks have 15 Core fields (auto-repaired if missing) and 8 Extended fields (graceful degradation). Key fields: Status (Backlog/Ready/In Progress/In Review/Done/Blocked), Executor (claude-code/cowork/human), Priority, Blocked By (dependency relation), Issuer (task creator/owner).
 
 #### State Transitions
 
