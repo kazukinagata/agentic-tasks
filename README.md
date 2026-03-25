@@ -1,3 +1,5 @@
+> **This repository has been archived.** Development continues at [waggle](https://github.com/kazukinagata/waggle).
+
 # Agentic Tasks
 
 AI-native task management plugin for [Claude Code](https://claude.ai/code) and [Cowork](https://cowork.com). Manage tasks through natural language, visualize them in real-time HTML views, and execute them autonomously with parallel agent orchestration.
